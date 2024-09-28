@@ -77,6 +77,21 @@ def get_top_hackernews_stories(num_stories: int = 5) -> str:
 openai_chat = OpenAIChat(api_key=OPENAI_API_KEY)
 assistant = Assistant(
     llm=openai_chat,
+    description="This assistant can help you with weather information, news updates, and top Hacker News stories.",
+    instructions=[
+        "Answer the user's question as best as you can.",
+        "If you don't know the answer, say so and ask the user to clarify.",
+        "If the user asks for a specific tool, provide it.",
+        "If the user asks for information, provide it.",
+        "If the user asks for help, provide it.",
+        "Don't be verbose. Be concise.",
+        "Don't say 'As an AI assistant'.",
+        "Don't say 'You asked me to help with that'.",
+        "Don't say 'I'm sorry, I can't help with that'.",
+        "Don't say 'I'm sorry, I'm not sure how to help with that'.",
+        "Don't say 'I'm sorry, I'm not sure what you mean'.",
+        "Your answers should be short and to the point. Maximum 100 words.",
+    ],
     run_id="telegram_function_calling_assistant",  # Add this line
     tools=[get_weather, get_news, get_top_hackernews_stories],
     add_datetime_to_instructions=True,
