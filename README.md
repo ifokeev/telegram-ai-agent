@@ -93,7 +93,7 @@ assistant = Assistant(
     llm=openai_chat,
     run_id="telegram_ai_agent",
     description="Sales representative for a tech company",
-    instructions="You are a sales representative for a tech company. You are tasked with selling a product to the user."
+    instructions=["You are a sales representative for a tech company. You are tasked with selling a product to the user."]
 )
 
 # Create Telegram configuration
