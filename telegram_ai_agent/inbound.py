@@ -7,10 +7,11 @@ from phi.assistant.assistant import Assistant
 from typing import List, Dict, Any
 from .config import TelegramConfig
 from .messages_handler import MessagesHandler
+from telethon import TelegramClient as TelethonClient
 
 
 class InboundMessaging(MessagesHandler):
-    def __init__(self, client, config: TelegramConfig, logger=None):
+    def __init__(self, client: TelethonClient, config: TelegramConfig, logger=None):
         super().__init__(client, config)
         self.logger = logger or logging.getLogger(__name__)
 

@@ -1,16 +1,16 @@
 import asyncio
 import random
-from telethon import TelegramClient
 from telethon.tl.functions.messages import SetTypingRequest
 from telethon.tl.types import SendMessageTypingAction
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain.embeddings import OpenAIEmbeddings
 from typing import List, AsyncGenerator
 from .config import TelegramConfig
+from telethon import TelegramClient as TelethonClient
 
 
 class MessagesHandler:
-    def __init__(self, client: TelegramClient, config: TelegramConfig):
+    def __init__(self, client: TelethonClient, config: TelegramConfig):
         self.client = client
         self.config = config
         self.embeddings = OpenAIEmbeddings()

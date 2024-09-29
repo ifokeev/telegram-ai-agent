@@ -1,55 +1,56 @@
-import asyncio
+import csv
 import logging
-from telethon import TelegramClient
+import asyncio
+from telethon import TelegramClient as TelethonClient
 from telethon.errors import SessionPasswordNeededError
-from typing import Optional
-from .config import TelegramConfig
+from telegram_ai_agent.config import TelegramConfig
 
 
-class TelegramAuth:
-    def __init__(self, config: TelegramConfig, logger: Optional[logging.Logger] = None):
+class TelegramSession:
+    def __init__(self, config: TelegramConfig, logger=None):
         self.config = config
         self.logger = logger or logging.getLogger(__name__)
+        self.client = None
 
-    async def authenticate(self) -> TelegramClient:
+    async def start(self) -> TelethonClient:
         self.logger.info("Connecting to Telegram servers...")
         if self.config.proxy:
-            client = TelegramClient(
+            self.client = TelethonClient(
                 self.config.session_name,
                 self.config.api_id,
                 self.config.api_hash,
                 proxy=self.config.proxy,
             )
         else:
-            client = TelegramClient(
+            self.client = TelethonClient(
                 self.config.session_name, self.config.api_id, self.config.api_hash
             )
 
         try:
-            await asyncio.wait_for(client.connect(), timeout=self.config.timeout)
+            await asyncio.wait_for(self.client.connect(), timeout=self.config.timeout)
 
             self.logger.info("Connected. Checking authorization...")
-            if not await client.is_user_authorized():
+            if not await self.client.is_user_authorized():
                 self.logger.info("User not authorized. Sending code request...")
-                await client.send_code_request(self.config.phone_number)
+                await self.client.send_code_request(self.config.phone_number)
                 self.logger.info(
                     "Code request sent. Check your Telegram app for the code."
                 )
                 code = input("Enter the code you received: ")
                 try:
                     self.logger.info("Signing in with the provided code...")
-                    await client.sign_in(self.config.phone_number, code)
+                    await self.client.sign_in(self.config.phone_number, code)
                 except SessionPasswordNeededError:
                     self.logger.info(
                         "Two-step verification enabled. Enter your password."
                     )
                     password = input("Enter your password: ")
-                    await client.sign_in(password=password)
+                    await self.client.sign_in(password=password)
 
             self.logger.info(
                 f"Successfully authenticated for {self.config.phone_number}"
             )
-            return client
+            return self.client
         except asyncio.TimeoutError:
             self.logger.error(
                 f"Connection timed out after {self.config.timeout} seconds."
@@ -57,6 +58,11 @@ class TelegramAuth:
             raise
         except Exception as e:
             self.logger.error(f"Authentication failed: {str(e)}")
-            if client.is_connected():
-                await client.disconnect()
+            if self.client.is_connected():
+                await self.client.disconnect()
             raise
+
+    async def stop(self):
+        if self.client:
+            await self.client.disconnect()
+            self.logger.info("Telegram client stopped")

@@ -1,10 +1,11 @@
 import logging
 from typing import Optional
 from phi.assistant.assistant import Assistant
-from .auth import TelegramAuth
 from .inbound import InboundMessaging
 from .outbound import OutboundMessaging
 from .config import TelegramConfig
+from .session import TelegramSession
+from .tools import TelegramTools
 
 
 class TelegramAIAgent:
@@ -17,15 +18,18 @@ class TelegramAIAgent:
         self.assistant = assistant
         self.config = config
         self.logger = logger or logging.getLogger(__name__)
-        self.auth = TelegramAuth(config, logger=self.logger)
+        self.session = TelegramSession(self.config, logger=self.logger)
         self.client = None
-        self.inbound = None
-        self.outbound = None
 
     async def start(self):
         try:
             self.logger.info("Starting Telegram AI Agent...")
-            self.client = await self.auth.authenticate()
+            await self.session.start()
+
+            if not self.session.client:
+                raise RuntimeError("Something went wrong. Client not started.")
+
+            self.client = self.session.client
 
             self.inbound = InboundMessaging(
                 self.client, self.config, logger=self.logger
@@ -33,6 +37,7 @@ class TelegramAIAgent:
             self.outbound = OutboundMessaging(
                 self.client, self.config, logger=self.logger
             )
+            self.tools = TelegramTools(self.client, logger=self.logger)
 
             self.logger.info(
                 "Successfully started and authorized the Telegram AI Agent."
@@ -43,8 +48,7 @@ class TelegramAIAgent:
 
     async def stop(self):
         self.logger.info("Stopping Telegram AI Agent...")
-        if self.client and self.client.is_connected():
-            await self.client.disconnect()
+        await self.session.stop()
         self.logger.info("Telegram AI Agent stopped.")
 
     async def send_messages(self, recipients, message, throttle=0):

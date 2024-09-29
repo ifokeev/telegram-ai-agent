@@ -4,10 +4,11 @@ from telethon.tl.types import InputPeerUser
 from telethon.errors import FloodWaitError
 from .config import TelegramConfig
 from .messages_handler import MessagesHandler
+from telethon import TelegramClient as TelethonClient
 
 
 class OutboundMessaging(MessagesHandler):
-    def __init__(self, client, config: TelegramConfig, logger=None):
+    def __init__(self, client: TelethonClient, config: TelegramConfig, logger=None):
         super().__init__(client, config)
         self.logger = logger or logging.getLogger(__name__)
 
