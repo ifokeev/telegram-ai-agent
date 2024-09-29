@@ -5,6 +5,7 @@ import json
 from dotenv import load_dotenv
 from telegram_ai_agent import TelegramAIAgent, TelegramConfig
 from telegram_ai_agent.session import TelegramSession
+from telegram_ai_agent.utils import setup_logging
 from phi.assistant.assistant import Assistant
 from phi.llm.openai.chat import OpenAIChat
 from telegram_ai_agent.tools import TelegramTools
@@ -12,6 +13,9 @@ import pandas as pd
 
 # Load environment variables
 load_dotenv()
+
+# Setup logging
+logger = setup_logging()
 
 # Initialize session state
 if "assistants" not in st.session_state:
@@ -21,6 +25,7 @@ if "telegram_users" not in st.session_state:
 
 
 def setup_assistant():
+    logger.info("Setting up assistant")
     st.header("Setup Assistant")
     st.write(
         """
@@ -75,6 +80,7 @@ def setup_assistant():
 
 
 async def authorize_telegram():
+    logger.info("Authorizing Telegram")
     st.header("Authorize Telegram")
     st.write(
         """
@@ -102,7 +108,7 @@ async def authorize_telegram():
         )
 
         # try to start session
-        session = TelegramSession(config)
+        session = TelegramSession(config, logger=logger)
         await session.start()
 
         st.session_state.telegram_users[phone_number] = config
@@ -110,6 +116,7 @@ async def authorize_telegram():
 
 
 async def download_members():
+    logger.info("Downloading members")
     st.header("Download Channel Members")
     st.write(
         """
@@ -117,32 +124,40 @@ async def download_members():
     
     Instructions:
     1. Select the Telegram account to use for downloading.
-    2. Enter the exact name of the channel or group.
+    2. Enter the channel/group ID or username.
     3. Specify a file name to save the member list (default is 'members.csv').
-    4. Click 'Download Members' to start the process.
+    4. Set the maximum number of members to download (0 for all available members).
+    5. Click 'Download Members' to start the process.
     
     Note: You must be a member of the channel or group to download its member list.
+    For private channels, use the channel ID (a negative integer, e.g., -1001234567890).
+    For public channels or groups, you can use either the username (without @) or the ID.
+    The download process may take some time for large groups.
     """
     )
 
     phone_number = st.selectbox(
         "Select Telegram User", list(st.session_state.telegram_users.keys())
     )
-    chat_name = st.text_input("Channel/Group Name")
+    chat_identifier = st.text_input("Channel/Group ID or Username")
     file_name = st.text_input("Save to File", "members.csv")
+
+    include_kick_ban = st.checkbox("Include kicked and banned members")
 
     if st.button("Download Members"):
         config = st.session_state.telegram_users[phone_number]
-        session = TelegramSession(config)
+        session = TelegramSession(config, logger=logger)
 
         try:
             await session.start()
             if not session.client:
                 raise Exception("Failed to start session")
 
-            tools = TelegramTools(session.client)
+            tools = TelegramTools(session.client, logger=logger)
 
-            member_count = await tools.get_chat_members(chat_name, file_name)
+            member_count = await tools.get_chat_members(
+                chat_identifier, file_name, include_kick_ban=include_kick_ban
+            )
             st.success(f"Downloaded {member_count} members to {file_name}")
         except Exception as e:
             st.error(f"An error occurred: {str(e)}")
@@ -151,6 +166,7 @@ async def download_members():
 
 
 async def show_available_chats():
+    logger.info("Showing available chats")
     st.header("Available Chats")
     st.write(
         """
@@ -171,16 +187,20 @@ async def show_available_chats():
 
     if st.button("Show Chats"):
         config = st.session_state.telegram_users[phone_number]
-        session = TelegramSession(config)
+        session = TelegramSession(config, logger=logger)
 
         try:
             await session.start()
             if not session.client:
                 raise Exception("Failed to start session")
 
-            tools = TelegramTools(session.client)
+            tools = TelegramTools(session.client, logger=logger)
 
             dialogs = await tools.get_dialogs(limit=limit)
+
+            # Convert the 'id' field to string
+            for dialog in dialogs:
+                dialog["id"] = str(dialog["id"])
 
             df = pd.DataFrame(dialogs)
             st.dataframe(df)
@@ -192,6 +212,7 @@ async def show_available_chats():
 
 
 def send_messages():
+    logger.info("Sending messages")
     st.header("Send Messages")
     st.write(
         """
@@ -229,7 +250,7 @@ def send_messages():
 
         config = st.session_state.telegram_users[phone_number]
         assistant = st.session_state.assistants[assistant_name]
-        agent = TelegramAIAgent(assistant, config)
+        agent = TelegramAIAgent(assistant, config, logger=logger)
 
         async def send_messages_async():
             await agent.start()
@@ -265,6 +286,7 @@ def send_messages():
 
 
 def main():
+    logger.info("Starting Telegram AI Agent Dashboard")
     st.title("Telegram AI Agent Dashboard")
     st.write(
         """
