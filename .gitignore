@@ -6,3 +6,5 @@ __pycache__
 .env
 .pytest_cache
 members.csv
+streamlit_app/sessions
+streamlit_app/sqlite.db

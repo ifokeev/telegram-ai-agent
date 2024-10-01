@@ -1,7 +1,8 @@
 import streamlit as st
 import asyncio
-import os
+import sys
 import json
+from pathlib import Path
 from dotenv import load_dotenv
 from telegram_ai_agent import TelegramAIAgent, TelegramConfig
 from telegram_ai_agent.session import TelegramSession
@@ -10,6 +11,12 @@ from phi.assistant.assistant import Assistant
 from phi.llm.openai.chat import OpenAIChat
 from telegram_ai_agent.tools import TelegramTools
 import pandas as pd
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+# Get the directory of the current script (app.py)
+current_dir = Path(__file__).parent.resolve()
 
 # Load environment variables
 load_dotenv()
@@ -17,11 +24,94 @@ load_dotenv()
 # Setup logging
 logger = setup_logging()
 
+# Set sessions folder as a constant relative to the current directory
+SESSIONS_FOLDER = current_dir / "sessions"
+
+# Set the SQLite database path relative to the current directory
+DB_PATH = current_dir / "sqlite.db"
+
+# Ensure the directory for the database exists
+DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+
 # Initialize session state
 if "assistants" not in st.session_state:
     st.session_state.assistants = {}
 if "telegram_users" not in st.session_state:
     st.session_state.telegram_users = {}
+
+# Database setup
+Base = declarative_base()
+
+
+class TelegramConfigDB(Base):
+    __tablename__ = "telegram_configs"
+
+    id = Column(Integer, primary_key=True)
+    phone_number = Column(String, unique=True)
+    api_id = Column(Integer)
+    api_hash = Column(String)
+    session_file = Column(String)
+
+
+# Use absolute path for database file
+try:
+    engine = create_engine(
+        f"sqlite:///{DB_PATH}", connect_args={"check_same_thread": False}
+    )
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine)
+    logger.info(f"Database initialized at {DB_PATH}")
+except Exception as e:
+    logger.error(f"Error initializing database: {str(e)}")
+    st.error(f"Error initializing database: {str(e)}")
+    sys.exit(1)
+
+
+def save_telegram_config(phone_number, api_id, api_hash, session_file):
+    try:
+        session = Session()
+        config = TelegramConfigDB(
+            phone_number=phone_number,
+            api_id=api_id,
+            api_hash=api_hash,
+            session_file=session_file,
+        )
+        session.add(config)
+        session.commit()
+        logger.info(f"Saved Telegram config for {phone_number}")
+    except Exception as e:
+        logger.error(f"Error saving Telegram config: {str(e)}")
+        st.error(f"Error saving Telegram config: {str(e)}")
+    finally:
+        session.close()
+
+
+def get_telegram_config(phone_number):
+    try:
+        session = Session()
+        config = (
+            session.query(TelegramConfigDB).filter_by(phone_number=phone_number).first()
+        )
+        return config
+    except Exception as e:
+        logger.error(f"Error getting Telegram config: {str(e)}")
+        st.error(f"Error getting Telegram config: {str(e)}")
+        return None
+    finally:
+        session.close()
+
+
+def get_all_telegram_configs():
+    try:
+        session = Session()
+        configs = session.query(TelegramConfigDB).all()
+        return configs
+    except Exception as e:
+        logger.error(f"Error getting all Telegram configs: {str(e)}")
+        st.error(f"Error getting all Telegram configs: {str(e)}")
+        return []
+    finally:
+        session.close()
 
 
 def setup_assistant():
@@ -100,8 +190,13 @@ async def authorize_telegram():
     api_hash = st.text_input("API Hash", type="password")
 
     if st.button("Authorize"):
+        # Create the session folder if it doesn't exist
+        SESSIONS_FOLDER.mkdir(parents=True, exist_ok=True)
+
+        session_path = SESSIONS_FOLDER / f"session_{phone_number}"
+
         config = TelegramConfig(
-            session_name=f"session_{phone_number}",
+            session_name=str(session_path),
             api_id=int(api_id),
             api_hash=api_hash,
             phone_number=phone_number,
@@ -111,8 +206,11 @@ async def authorize_telegram():
         session = TelegramSession(config, logger=logger)
         await session.start()
 
-        st.session_state.telegram_users[phone_number] = config
+        # Save config to database
+        save_telegram_config(phone_number, api_id, api_hash, str(session_path))
+
         st.success(f"Telegram user '{phone_number}' authorized successfully!")
+        st.info(f"Session file saved in: {session_path}")
 
 
 async def download_members():
@@ -136,8 +234,16 @@ async def download_members():
     """
     )
 
-    phone_number = st.selectbox(
-        "Select Telegram User", list(st.session_state.telegram_users.keys())
+    # Get all configs from database
+    configs = get_all_telegram_configs()
+    if not configs:
+        st.warning(
+            "No Telegram accounts found. Please authorize a Telegram account first."
+        )
+        return
+
+    selected_phone = st.selectbox(
+        "Select Telegram Account", [config.phone_number for config in configs]
     )
     chat_identifier = st.text_input("Channel/Group ID or Username")
     file_name = st.text_input("Save to File", "members.csv")
@@ -145,8 +251,18 @@ async def download_members():
     include_kick_ban = st.checkbox("Include kicked and banned members")
 
     if st.button("Download Members"):
-        config = st.session_state.telegram_users[phone_number]
-        session = TelegramSession(config, logger=logger)
+        config = get_telegram_config(selected_phone)
+        if not config:
+            st.error(f"No configuration found for {selected_phone}")
+            return
+
+        telegram_config = TelegramConfig(
+            session_name=config.session_file,
+            api_id=config.api_id,
+            api_hash=config.api_hash,
+            phone_number=config.phone_number,
+        )
+        session = TelegramSession(telegram_config, logger=logger)
 
         try:
             await session.start()
@@ -156,11 +272,12 @@ async def download_members():
             tools = TelegramTools(session.client, logger=logger)
 
             member_count = await tools.get_chat_members(
-                chat_identifier, file_name, include_kick_ban=include_kick_ban
+                chat_identifier,
+                file_name,
+                include_kick_ban=include_kick_ban,
+                output_dir=str(current_dir),
             )
             st.success(f"Downloaded {member_count} members to {file_name}")
-        except Exception as e:
-            st.error(f"An error occurred: {str(e)}")
         finally:
             await session.stop()
 
@@ -169,25 +286,39 @@ async def show_available_chats():
     logger.info("Showing available chats")
     st.header("Available Chats")
     st.write(
-        """
-    This section shows your available chats and their last messages.
-    
-    Instructions:
-    1. Select the Telegram account to use.
-    2. Click 'Show Chats' to display the list of available chats.
-    """
+        "This section shows your available chats and their last messages.\n\n"
+        "Instructions:\n"
+        "1. Select the Telegram session to use.\n"
+        "2. Click 'Show Chats' to display the list of available chats."
     )
 
-    phone_number = st.selectbox(
-        "Select Telegram User", list(st.session_state.telegram_users.keys())
+    configs = get_all_telegram_configs()
+    if not configs:
+        st.warning(
+            "No Telegram accounts found. Please authorize a Telegram account first."
+        )
+        return
+
+    selected_phone = st.selectbox(
+        "Select Telegram Account", [config.phone_number for config in configs]
     )
     limit = st.number_input(
         "Number of chats to show", min_value=1, max_value=100, value=20
     )
 
     if st.button("Show Chats"):
-        config = st.session_state.telegram_users[phone_number]
-        session = TelegramSession(config, logger=logger)
+        config = get_telegram_config(selected_phone)
+        if not config:
+            st.error(f"No configuration found for {selected_phone}")
+            return
+
+        telegram_config = TelegramConfig(
+            session_name=config.session_file,
+            api_id=config.api_id,
+            api_hash=config.api_hash,
+            phone_number=config.phone_number,
+        )
+        session = TelegramSession(telegram_config, logger=logger)
 
         try:
             await session.start()
@@ -198,15 +329,8 @@ async def show_available_chats():
 
             dialogs = await tools.get_dialogs(limit=limit)
 
-            # Convert the 'id' field to string
-            for dialog in dialogs:
-                dialog["id"] = str(dialog["id"])
-
-            df = pd.DataFrame(dialogs)
+            df = pd.DataFrame([{**d, "id": str(d["id"])} for d in dialogs])
             st.dataframe(df)
-
-        except Exception as e:
-            st.error(f"An error occurred: {str(e)}")
         finally:
             await session.stop()
 
@@ -232,9 +356,19 @@ def send_messages():
     """
     )
 
-    file_name = st.selectbox("Select Members File", os.listdir())
-    phone_number = st.selectbox(
-        "Select Telegram User", list(st.session_state.telegram_users.keys())
+    # Get all configs from database
+    configs = get_all_telegram_configs()
+    if not configs:
+        st.warning(
+            "No Telegram accounts found. Please authorize a Telegram account first."
+        )
+        return
+
+    file_name = st.selectbox(
+        "Select Members File", [f.name for f in current_dir.iterdir() if f.is_file()]
+    )
+    selected_phone = st.selectbox(
+        "Select Telegram Account", [config.phone_number for config in configs]
     )
     assistant_name = st.selectbox(
         "Select Assistant", list(st.session_state.assistants.keys())
@@ -248,9 +382,19 @@ def send_messages():
         with open(file_name, "r") as f:
             members = json.load(f)
 
-        config = st.session_state.telegram_users[phone_number]
+        config = get_telegram_config(selected_phone)
+        if not config:
+            st.error(f"No configuration found for {selected_phone}")
+            return
+
+        telegram_config = TelegramConfig(
+            session_name=config.session_file,
+            api_id=config.api_id,
+            api_hash=config.api_hash,
+            phone_number=config.phone_number,
+        )
         assistant = st.session_state.assistants[assistant_name]
-        agent = TelegramAIAgent(assistant, config, logger=logger)
+        agent = TelegramAIAgent(assistant, telegram_config, logger=logger)
 
         async def send_messages_async():
             await agent.start()

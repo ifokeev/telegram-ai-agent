@@ -1,3 +1,4 @@
+import os
 import csv
 import logging
 from telethon import TelegramClient as TelethonClient
@@ -53,7 +54,11 @@ class TelegramTools:
         return chat
 
     async def get_chat_members(
-        self, chat_identifier: str, output_file: str, include_kick_ban: bool = False
+        self,
+        chat_identifier: str,
+        output_file: str,
+        include_kick_ban: bool = False,
+        output_dir: str = None,
     ):
         self.logger.info(f"Fetching members from {chat_identifier}")
 
@@ -61,12 +66,17 @@ class TelegramTools:
             chat = await self.find_chat(chat_identifier)
 
             self.logger.info(
-                f"Found chat: {chat.title if hasattr(chat, 'title') else chat.username}"
+                f"Found chat: {getattr(chat, 'title', None) or getattr(chat, 'username', 'Unknown')}"
             )
 
             members = await self.advanced_search_participants(chat, include_kick_ban)
 
-            with open(output_file, "w", newline="", encoding="utf-8") as file:
+            if output_dir:
+                output_path = os.path.join(output_dir, output_file)
+            else:
+                output_path = output_file
+
+            with open(output_path, "w", newline="", encoding="utf-8") as file:
                 writer = csv.DictWriter(
                     file,
                     fieldnames=["id", "username", "first_name", "last_name", "phone"],
@@ -84,7 +94,7 @@ class TelegramTools:
                     )
 
             self.logger.info(
-                f"Successfully saved {len(members)} members to {output_file}"
+                f"Successfully saved {len(members)} members to {output_path}"
             )
             return len(members)
 
