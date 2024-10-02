@@ -1,7 +1,7 @@
 import os
 import csv
 import logging
-from telethon import TelegramClient as TelethonClient
+from telethon import TelegramClient
 from telethon.tl.functions.channels import GetParticipantsRequest
 from telethon.tl.types import (
     ChannelParticipantsAdmins,
@@ -9,11 +9,16 @@ from telethon.tl.types import (
     ChannelParticipantsSearch,
     ChannelParticipantsKicked,
     ChannelParticipantsBanned,
+    User,
+    Chat,
+    Channel,
 )
 
 
 class TelegramTools:
-    def __init__(self, client: TelethonClient, logger=None):
+    def __init__(self, client: TelegramClient, logger=None):
+        if not isinstance(client, TelegramClient):
+            raise TypeError("client must be an instance of TelegramClient")
         self.client = client
         self.logger = logger or logging.getLogger(__name__)
 
@@ -49,7 +54,7 @@ class TelegramTools:
             chat = await self.client.get_entity(int(chat["id"]))
 
         self.logger.info(
-            f"Found chat: {chat.title if hasattr(chat, 'title') else chat.username}"
+            f"Found chat: {getattr(chat, 'title', None) or getattr(chat, 'username', 'Unknown')}"
         )
         return chat
 
@@ -65,11 +70,25 @@ class TelegramTools:
         try:
             chat = await self.find_chat(chat_identifier)
 
-            self.logger.info(
-                f"Found chat: {getattr(chat, 'title', None) or getattr(chat, 'username', 'Unknown')}"
-            )
-
-            members = await self.advanced_search_participants(chat, include_kick_ban)
+            if isinstance(chat, User):
+                self.logger.info(
+                    f"The provided identifier is a user, not a chat or channel."
+                )
+                members = [
+                    (
+                        chat.id,
+                        chat.username,
+                        chat.first_name,
+                        chat.last_name,
+                        chat.phone,
+                    )
+                ]
+            elif isinstance(chat, (Chat, Channel)):
+                members = await self.advanced_search_participants(
+                    chat, include_kick_ban
+                )
+            else:
+                raise ValueError(f"Unsupported chat type: {type(chat)}")
 
             if output_dir:
                 output_path = os.path.join(output_dir, output_file)
@@ -103,7 +122,12 @@ class TelegramTools:
             raise
 
     async def advanced_search_participants(self, chat, include_kick_ban=False):
-        self.logger.info(f"Performing advanced search for participants in {chat.title}")
+        if isinstance(chat, User):
+            return [
+                (chat.id, chat.username, chat.first_name, chat.last_name, chat.phone)
+            ]
+
+        self.logger.info(f"Performing advanced search for participants")
         members = set()
         alphabet1 = "АБCДЕЄЖФГHИІJКЛМНОПQРСТУВWХЦЧШЩЫЮЯЗ"
         alphabet2 = "АCЕHИJЛМНОРСТУВWЫ"
@@ -134,11 +158,13 @@ class TelegramTools:
                         )
                     )
                 offset += len(participants.participants)
-                if offset >= participants.count or len(participants.participants) == 0:
+                if offset >= participants.count or not participants.participants:
                     break
 
             self.logger.info(
-                f"GetParticipants({getattr(filter_type, 'q', '')}) returned {participants.count}/{max_count}. Accumulated count: {len(members)}"
+                f"GetParticipants({getattr(filter_type, 'q', '')}) "
+                f"returned {participants.count}/{max_count}. "
+                f"Accumulated count: {len(members)}"
             )
 
             if recurse and (

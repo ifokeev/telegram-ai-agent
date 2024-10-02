@@ -1,68 +1,88 @@
-import csv
 import logging
 import asyncio
 from telethon import TelegramClient as TelethonClient
 from telethon.errors import SessionPasswordNeededError
-from telegram_ai_agent.config import TelegramConfig
+from .config import TelegramConfig
 
 
-class TelegramSession:
+class TelegramSession(TelethonClient):
     def __init__(self, config: TelegramConfig, logger=None):
-        self.config = config
         self.logger = logger or logging.getLogger(__name__)
-        self.client = None
 
-    async def start(self) -> TelethonClient:
+        # Initialize client parameters
+        client_params = {
+            "session": config.session_name,
+            "api_id": config.api_id,
+            "api_hash": config.api_hash,
+        }
+
+        # Add proxy if it's present in the config
+        if config.proxy:
+            client_params["proxy"] = config.proxy
+
+        super().__init__(**client_params)
+
+        self.config = config
+
+    async def __aenter__(self):
+        await self.start()
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.disconnect()
+
+    async def start(self):
         self.logger.info("Connecting to Telegram servers...")
-        if self.config.proxy:
-            self.client = TelethonClient(
-                self.config.session_name,
-                self.config.api_id,
-                self.config.api_hash,
-                proxy=self.config.proxy,
-            )
-        else:
-            self.client = TelethonClient(
-                self.config.session_name, self.config.api_id, self.config.api_hash
-            )
-
         try:
-            await asyncio.wait_for(self.client.connect(), timeout=self.config.timeout)
-
+            await asyncio.wait_for(self.connect(), timeout=self.config.timeout)
             self.logger.info("Connected. Checking authorization...")
-            if not await self.client.is_user_authorized():
+            if not await self.is_user_authorized():
                 self.logger.info("User not authorized. Sending code request...")
-                await self.client.send_code_request(self.config.phone_number)
+                await self.send_code_request(self.config.phone_number)
                 self.logger.info(
                     "Code request sent. Check your Telegram app for the code."
                 )
                 code = input("Enter the code you received: ")
                 try:
                     self.logger.info("Signing in with the provided code...")
-                    await self.client.sign_in(self.config.phone_number, code)
+                    await self.sign_in(self.config.phone_number, code)
                 except SessionPasswordNeededError:
                     self.logger.info(
                         "Two-step verification enabled. Enter your password."
                     )
                     password = input("Enter your password: ")
-                    await self.client.sign_in(password=password)
-
+                    await self.sign_in(password=password)
             self.logger.info(
                 f"Successfully authenticated for {self.config.phone_number}"
             )
-            return self.client
         except asyncio.TimeoutError:
             self.logger.error(
                 f"Connection timed out after {self.config.timeout} seconds."
             )
             raise
         except Exception as e:
-            self.logger.error(f"Authentication failed: {str(e)}")
-            if self.client.is_connected():
-                await self.client.disconnect()
+            self.logger.error(f"Authentication failed in start(): {str(e)}")
+            await self.disconnect()
+            raise
+
+    async def sign_in(self, phone=None, code=None, password=None):
+        try:
+            if code:
+                await super().sign_in(phone, code)
+            elif password:
+                await super().sign_in(password=password)
+            else:
+                raise ValueError("Code or password must be provided")
+            self.logger.info(
+                f"Successfully authenticated for {self.config.phone_number}"
+            )
+        except SessionPasswordNeededError:
+            self.logger.info("Two-step verification enabled. Password required.")
+            raise
+        except Exception as e:
+            self.logger.error(f"Authentication failed during sign-in: {str(e)}")
             raise
 
     async def stop(self):
-        if self.client:
-            await self.client.disconnect()
-            self.logger.info("Telegram client stopped")
+        await self.disconnect()
+        self.logger.info("Telegram client stopped")
