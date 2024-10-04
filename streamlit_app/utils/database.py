@@ -25,6 +25,8 @@ class TelegramConfigDB(Base):
     api_hash = Column(String)
     session_file = Column(String)
 
+    assistants = relationship("Assistant", back_populates="telegram_config")
+
 
 class Segment(Base):
     __tablename__ = "segments"
@@ -47,6 +49,19 @@ class SegmentUser(Base):
     phone = Column(String)
 
     segment = relationship("Segment", back_populates="users")
+
+
+class Assistant(Base):
+    __tablename__ = "assistants"
+
+    id = Column(Integer, primary_key=True)
+    telegram_config_id = Column(Integer, ForeignKey("telegram_configs.id"))
+    name = Column(String, unique=True)
+    api_key = Column(String)
+    description = Column(String)
+    instructions = Column(String)
+
+    telegram_config = relationship("TelegramConfigDB", back_populates="assistants")
 
 
 # Create engine and session
@@ -208,6 +223,69 @@ def remove_user_from_segment(segment_id, user_id):
         )
         if user:
             session.delete(user)
+            session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
+    finally:
+        session.close()
+
+
+# Add these new functions
+def save_assistant(telegram_config_id, name, api_key, description, instructions):
+    session = Session()
+    try:
+        assistant = Assistant(
+            telegram_config_id=telegram_config_id,
+            name=name,
+            api_key=api_key,
+            description=description,
+            instructions=instructions,
+        )
+        session.add(assistant)
+        session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
+    finally:
+        session.close()
+
+
+def get_assistants(telegram_config_id):
+    session = Session()
+    try:
+        return (
+            session.query(Assistant)
+            .filter_by(telegram_config_id=telegram_config_id)
+            .all()
+        )
+    finally:
+        session.close()
+
+
+def update_assistant(assistant_id, name, api_key, description, instructions):
+    session = Session()
+    try:
+        assistant = session.query(Assistant).filter_by(id=assistant_id).first()
+        if assistant:
+            assistant.name = name
+            assistant.api_key = api_key
+            assistant.description = description
+            assistant.instructions = instructions
+            session.commit()
+    except Exception as e:
+        session.rollback()
+        raise e
+    finally:
+        session.close()
+
+
+def delete_assistant(assistant_id):
+    session = Session()
+    try:
+        assistant = session.query(Assistant).filter_by(id=assistant_id).first()
+        if assistant:
+            session.delete(assistant)
             session.commit()
     except Exception as e:
         session.rollback()

@@ -13,10 +13,12 @@ st.markdown(
     """
     This dashboard allows you to manage your Telegram AI Agent. You can:
     
-    - Manage Telegram accounts
-    - View and interact with chats
-    - Set up AI assistants
-    - Create and manage campaigns
+    - 🔐 Manage Telegram accounts
+    - 💬 View and interact with chats
+    - 👥 Create and manage user segments
+    - 📢 Set up and run campaigns
+    - 🤖 Set up AI assistants
+    - 🎮 Test your assistants in the playground
     
     Choose a function from the sidebar to get started!
     """
