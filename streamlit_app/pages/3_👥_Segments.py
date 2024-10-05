@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from streamlit_app.utils.logging_utils import setup_logger
-from streamlit_app.utils.database import (
+from streamlit_app.utils.database.segment import (
     create_segment,
     get_all_segments,
     add_users_to_segment,

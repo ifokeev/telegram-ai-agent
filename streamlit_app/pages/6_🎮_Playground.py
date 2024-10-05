@@ -2,10 +2,12 @@ import streamlit as st
 from phi.assistant.assistant import Assistant
 from phi.llm.openai.chat import OpenAIChat
 from streamlit_app.utils.logging_utils import setup_logger
-from streamlit_app.utils.database import (
-    get_assistants,
+from streamlit_app.utils.database.telegram_config import (
     get_all_telegram_configs,
     get_telegram_config,
+)
+from streamlit_app.utils.database.assistant import (
+    get_assistants,
 )
 
 logger = setup_logger(__name__)
@@ -66,24 +68,28 @@ else:
                     )
 
                     try:
+                        # Split the instructions string into a list
+                        instructions_list = assistant.instructions.split("\n")
+
+                        # Initialize OpenAIChat
                         openai_chat = OpenAIChat(api_key=assistant.api_key)
                         phi_assistant = Assistant(
                             llm=openai_chat,
                             run_id=assistant.name,
                             description=assistant.description,
-                            instructions=assistant.instructions,
+                            instructions=instructions_list,
                             add_datetime_to_instructions=True,
                         )
-                        response = phi_assistant.chat(
-                            messages=st.session_state.messages
+                        response = phi_assistant.run(
+                            messages=st.session_state.messages, stream=False
                         )
 
                         # Display assistant response in chat message container
                         with st.chat_message("assistant"):
-                            st.markdown(response.content)
+                            st.markdown(response)
                         # Add assistant response to chat history
                         st.session_state.messages.append(
-                            {"role": "assistant", "content": response.content}
+                            {"role": "assistant", "content": response}
                         )
                     except Exception as e:
                         logger.error(f"Error in assistant response: {str(e)}")

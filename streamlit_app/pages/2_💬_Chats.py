@@ -5,7 +5,10 @@ from pathlib import Path
 from telegram_ai_agent import TelegramConfig
 from telegram_ai_agent.session import TelegramSession
 from telegram_ai_agent.tools import TelegramTools
-from streamlit_app.utils.database import get_all_telegram_configs, get_telegram_config
+from streamlit_app.utils.database.telegram_config import (
+    get_all_telegram_configs,
+    get_telegram_config,
+)
 from streamlit_app.utils.logging_utils import setup_logger
 
 logger = setup_logger(__name__)

@@ -2,9 +2,11 @@ import streamlit as st
 from phi.assistant.assistant import Assistant
 from phi.llm.openai.chat import OpenAIChat
 from streamlit_app.utils.logging_utils import setup_logger
-from streamlit_app.utils.database import (
+from streamlit_app.utils.database.telegram_config import (
     get_all_telegram_configs,
     get_telegram_config,
+)
+from streamlit_app.utils.database.assistant import (
     save_assistant,
     get_assistants,
     update_assistant,

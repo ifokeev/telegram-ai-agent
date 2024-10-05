@@ -3,7 +3,7 @@ import asyncio
 from pathlib import Path
 from telegram_ai_agent import TelegramConfig
 from telegram_ai_agent.session import TelegramSession
-from streamlit_app.utils.database import (
+from streamlit_app.utils.database.telegram_config import (
     save_telegram_config,
     get_all_telegram_configs,
     delete_telegram_config,
