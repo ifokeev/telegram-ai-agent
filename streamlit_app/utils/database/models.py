@@ -1,5 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean, Float, DateTime
 from sqlalchemy.orm import relationship
 
 Base = declarative_base()
@@ -15,6 +15,7 @@ class TelegramConfigDB(Base):
     session_file = Column(String)
 
     assistants = relationship("Assistant", back_populates="telegram_config")
+    campaigns = relationship("Campaign", back_populates="telegram_config")
 
 
 class Assistant(Base):
@@ -30,8 +31,7 @@ class Assistant(Base):
     pid = Column(Integer, nullable=True)
 
     telegram_config = relationship("TelegramConfigDB", back_populates="assistants")
-    # Removed the relationship to Job model:
-    # job = relationship("Job", back_populates="assistant", uselist=False)
+    campaigns = relationship("Campaign", back_populates="assistant")
 
 
 class Segment(Base):
@@ -41,6 +41,7 @@ class Segment(Base):
     name = Column(String, unique=True)
     description = Column(String)
     users = relationship("SegmentUser", back_populates="segment")
+    campaigns = relationship("Campaign", back_populates="segment")
 
 
 class SegmentUser(Base):
@@ -55,3 +56,34 @@ class SegmentUser(Base):
     phone = Column(String)
 
     segment = relationship("Segment", back_populates="users")
+
+
+# Add these new model classes
+class Campaign(Base):
+    __tablename__ = "campaigns"
+
+    id = Column(Integer, primary_key=True)
+    telegram_config_id = Column(Integer, ForeignKey("telegram_configs.id"))
+    segment_id = Column(Integer, ForeignKey("segments.id"))
+    assistant_id = Column(Integer, ForeignKey("assistants.id"))
+    message_template = Column(String)
+    make_unique = Column(Boolean)
+    throttle = Column(Float)
+
+    telegram_config = relationship("TelegramConfigDB", back_populates="campaigns")
+    segment = relationship("Segment", back_populates="campaigns")
+    assistant = relationship("Assistant", back_populates="campaigns")
+    recipients = relationship("CampaignRecipient", back_populates="campaign")
+
+
+class CampaignRecipient(Base):
+    __tablename__ = "campaign_recipients"
+
+    id = Column(Integer, primary_key=True)
+    campaign_id = Column(Integer, ForeignKey("campaigns.id"))
+    user_id = Column(String)
+    username = Column(String)
+    status = Column(String, default="Pending")
+    sent_at = Column(DateTime, nullable=True)
+
+    campaign = relationship("Campaign", back_populates="recipients")

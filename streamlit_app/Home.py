@@ -8,7 +8,6 @@ from streamlit_app.utils.database.agent_process import (
     stop_agent_process,
 )
 import time
-import threading
 
 st.set_page_config(
     page_title="Telegram AI Agent Dashboard",
@@ -73,13 +72,3 @@ else:
                     st.success(f"Starting assistant '{assistant.name}'")
                     time.sleep(1)
                     st.rerun()
-
-
-# Optionally, auto-refresh the page every few seconds
-def auto_refresh(interval=10):
-    time.sleep(interval)
-    st.rerun()
-
-
-# Start the auto-refresh in a separate thread
-threading.Thread(target=auto_refresh).start()
