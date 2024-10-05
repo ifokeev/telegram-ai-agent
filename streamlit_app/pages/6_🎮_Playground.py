@@ -1,14 +1,13 @@
 import streamlit as st
-from phi.assistant.assistant import Assistant
-from phi.llm.openai.chat import OpenAIChat
 from streamlit_app.utils.logging_utils import setup_logger
 from streamlit_app.utils.database.telegram_config import (
     get_all_telegram_configs,
     get_telegram_config,
 )
-from streamlit_app.utils.database.assistant import (
-    get_assistants,
-)
+from streamlit_app.utils.database.assistant import get_assistants
+from streamlit_app.utils.assistant_factory import (
+    create_phi_assistant,
+)  # Import the factory method
 
 logger = setup_logger(__name__)
 
@@ -34,20 +33,24 @@ else:
                 "No assistants found for this account. Please create an assistant first."
             )
         else:
-            selected_assistant = st.selectbox(
+            selected_assistant_name = st.selectbox(
                 "Select Assistant", [assistant.name for assistant in assistants]
             )
 
-            assistant = next(
-                (a for a in assistants if a.name == selected_assistant), None
+            assistant_data = next(
+                (a for a in assistants if a.name == selected_assistant_name), None
             )
 
-            if assistant:
-                st.subheader(f"Chatting with: {assistant.name}")
-                st.write(f"Description: {assistant.description}")
-                st.write("Instructions:")
-                for instruction in assistant.instructions.split("\n"):
-                    st.write(f"- {instruction}")
+            if assistant_data:
+                st.subheader(f"Chatting with: {assistant_data.name}")
+
+                if str(assistant_data.description) != "":
+                    st.write(f"Description: {assistant_data.description}")
+
+                if str(assistant_data.instructions) != "":
+                    st.write("Instructions:")
+                    for instruction in assistant_data.instructions.split("\n"):
+                        st.write(f"- {instruction}")
 
                 # Initialize chat history
                 if "messages" not in st.session_state:
@@ -68,18 +71,9 @@ else:
                     )
 
                     try:
-                        # Split the instructions string into a list
-                        instructions_list = assistant.instructions.split("\n")
-
-                        # Initialize OpenAIChat
-                        openai_chat = OpenAIChat(api_key=assistant.api_key)
-                        phi_assistant = Assistant(
-                            llm=openai_chat,
-                            run_id=assistant.name,
-                            description=assistant.description,
-                            instructions=instructions_list,
-                            add_datetime_to_instructions=True,
-                        )
+                        # Create the phi_assistant using the factory method
+                        phi_assistant = create_phi_assistant(assistant_data)
+                        # Run the assistant to get a response
                         response = phi_assistant.run(
                             messages=st.session_state.messages, stream=False
                         )

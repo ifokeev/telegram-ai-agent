@@ -12,6 +12,7 @@ from streamlit_app.utils.database.assistant import (
     update_assistant,
     delete_assistant,
 )
+from streamlit_app.utils.assistant_factory import create_phi_assistant
 
 logger = setup_logger(__name__)
 
@@ -145,3 +146,20 @@ else:
                 st.info(
                     "No assistants found for this account. Create one in the 'Create Assistant' tab."
                 )
+
+if st.button("Test Assistant"):
+    try:
+        # Create assistant data object (this might be different depending on your implementation)
+        assistant_data = AssistantData(
+            name=name,
+            api_key=api_key,
+            description=description,
+            instructions=instructions,
+        )
+        phi_assistant = create_phi_assistant(assistant_data)
+        # Test the assistant with a sample message
+        response = phi_assistant.run(messages=[{"role": "user", "content": "Hello"}])
+        st.success(f"Assistant responded: {response}")
+    except Exception as e:
+        logger.error(f"Error testing assistant: {str(e)}")
+        st.error(f"An error occurred: {str(e)}")

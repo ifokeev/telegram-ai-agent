@@ -9,6 +9,7 @@ from streamlit_app.utils.database.agent_process import (
 )
 import time
 import threading
+from streamlit_app.utils.agent_factory import create_telegram_ai_agent
 
 st.set_page_config(
     page_title="Telegram AI Agent Dashboard",
