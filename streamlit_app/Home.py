@@ -9,7 +9,6 @@ from streamlit_app.utils.database.agent_process import (
 )
 import time
 import threading
-from streamlit_app.utils.agent_factory import create_telegram_ai_agent
 
 st.set_page_config(
     page_title="Telegram AI Agent Dashboard",
@@ -63,13 +62,13 @@ else:
             st.write(f"Assistant: {assistant.name}")
         with col2:
             if assistant.status == "Running":
-                if st.button(f"Stop", key=f"stop_{assistant.id}"):
+                if st.button("Stop", key=f"stop_{assistant.id}"):
                     stop_agent_process(assistant.id)
                     st.success(f"Stopping assistant '{assistant.name}'")
                     time.sleep(1)
                     st.rerun()
             else:
-                if st.button(f"Start", key=f"start_{assistant.id}"):
+                if st.button("Start", key=f"start_{assistant.id}"):
                     start_agent_process(assistant.id)
                     st.success(f"Starting assistant '{assistant.name}'")
                     time.sleep(1)

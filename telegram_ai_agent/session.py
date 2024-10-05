@@ -67,7 +67,7 @@ class TelegramSession(TelethonClient):
 
     async def sign_in(self, phone=None, code=None, password=None):
         try:
-            if code:
+            if phone and code:
                 await super().sign_in(phone, code)
             elif password:
                 await super().sign_in(password=password)

@@ -4,7 +4,6 @@ import os
 import json
 from dotenv import load_dotenv
 from telegram_ai_agent import TelegramAIAgent, TelegramConfig
-from telegram_ai_agent.session import TelegramClient
 from telegram_ai_agent.utils import setup_logging
 from phi.assistant.assistant import Assistant
 from phi.llm.openai.chat import OpenAIChat
@@ -28,13 +27,13 @@ CHAT_NAME = os.getenv(
 MEMBERS_FILE = "chat_members.json"
 
 
-async def get_chat_members(client, chat_name):
+async def get_chat_members(session, chat_name):
     if os.path.exists(MEMBERS_FILE):
         with open(MEMBERS_FILE, "r") as f:
             return json.load(f)
 
     logger.info(f"Downloading members from {chat_name}")
-    members = await client.get_chat_members(chat_name, MEMBERS_FILE)
+    members = await session.get_chat_members(chat_name, MEMBERS_FILE)
     return members
 
 
@@ -81,7 +80,7 @@ async def main():
         await agent.start()
 
         # Download members
-        members = await get_chat_members(agent.client, CHAT_NAME)
+        members = await get_chat_members(agent.session, CHAT_NAME)
 
         # Prepare default message for outbound sending
         default_message = "Hello! This is a test message from our AI assistant. We're excited to connect with you and share updates about our services."
@@ -114,7 +113,7 @@ async def main():
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
     finally:
-        if agent.client:
+        if agent.session:
             await agent.stop()
 
 

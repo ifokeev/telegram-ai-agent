@@ -4,7 +4,7 @@ import signal
 import asyncio
 import logging
 from .assistant import get_assistant_by_id, update_assistant_status
-from .agent_factory import create_telegram_ai_agent  # Import the agent factory method
+from ..agent_factory import create_telegram_ai_agent
 
 
 def run_agent_process(assistant_id):

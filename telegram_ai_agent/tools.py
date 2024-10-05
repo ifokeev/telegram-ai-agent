@@ -1,7 +1,6 @@
 import os
 import csv
 import logging
-from telethon import TelegramClient
 from telethon.tl.functions.channels import GetParticipantsRequest
 from telethon.tl.types import (
     ChannelParticipantsAdmins,
@@ -13,13 +12,12 @@ from telethon.tl.types import (
     Chat,
     Channel,
 )
+from .session import TelegramSession
 
 
 class TelegramTools:
-    def __init__(self, client: TelegramClient, logger=None):
-        if not isinstance(client, TelegramClient):
-            raise TypeError("client must be an instance of TelegramClient")
-        self.client = client
+    def __init__(self, session: TelegramSession, logger=None):
+        self.session = session
         self.logger = logger or logging.getLogger(__name__)
 
     async def find_chat(self, chat_identifier: str):
@@ -30,7 +28,7 @@ class TelegramTools:
                 chat_identifier = int(chat_identifier)
             except ValueError:
                 pass  # If it's not an integer, keep it as a string
-            chat = await self.client.get_entity(chat_identifier)
+            chat = await self.session.get_entity(chat_identifier)
         except ValueError:
             # If direct lookup fails, try to find the chat in the user's dialogs
             self.logger.info("Direct lookup failed. Searching in dialogs...")
@@ -51,7 +49,7 @@ class TelegramTools:
                 )
 
             # Get the actual entity from the found dialog
-            chat = await self.client.get_entity(int(chat["id"]))
+            chat = await self.session.get_entity(int(chat["id"]))
 
         self.logger.info(
             f"Found chat: {getattr(chat, 'title', None) or getattr(chat, 'username', 'Unknown')}"
@@ -136,7 +134,7 @@ class TelegramTools:
             offset = 0
             max_count = 0
             while True:
-                participants = await self.client(
+                participants = await self.session(
                     GetParticipantsRequest(
                         channel=chat,
                         filter=filter_type,
@@ -145,6 +143,7 @@ class TelegramTools:
                         hash=0,
                     )
                 )
+
                 if participants.count > max_count:
                     max_count = participants.count
                 for user in participants.users:
@@ -206,7 +205,7 @@ class TelegramTools:
     async def get_dialogs(self, limit=None):
         self.logger.info("Fetching dialogs...")
         dialogs = []
-        async for dialog in self.client.iter_dialogs(limit=limit):
+        async for dialog in self.session.iter_dialogs(limit=limit):
             last_message = dialog.message.message if dialog.message else "No messages"
             dialogs.append(
                 {

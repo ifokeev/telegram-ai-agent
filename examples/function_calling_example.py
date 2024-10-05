@@ -124,11 +124,11 @@ async def main():
         await agent.process_incoming_messages()
 
         # Run the agent until disconnected
-        await agent.client.run_until_disconnected()  # type: ignore
+        await agent.session.run_until_disconnected()  # type: ignore
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
     finally:
-        if agent.client:
+        if agent.session:
             await agent.stop()
 
 

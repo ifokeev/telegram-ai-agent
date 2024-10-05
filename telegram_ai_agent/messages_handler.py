@@ -1,20 +1,26 @@
 import asyncio
 import random
+import logging
 from telethon.tl.functions.messages import SetTypingRequest
 from telethon.tl.types import SendMessageTypingAction
-from langchain_experimental.text_splitter import SemanticChunker
-from langchain.embeddings import OpenAIEmbeddings
 from typing import List, AsyncGenerator
 from .config import TelegramConfig
-from telethon import TelegramClient as TelethonClient
+from .session import TelegramSession
+from langchain_experimental.text_splitter import SemanticChunker
 
 
 class MessagesHandler:
-    def __init__(self, client: TelethonClient, config: TelegramConfig):
-        self.client = client
+    def __init__(
+        self,
+        session: TelegramSession,
+        config: TelegramConfig,
+        text_splitter: SemanticChunker,
+        logger=None,
+    ):
+        self.session = session
         self.config = config
-        self.embeddings = OpenAIEmbeddings()
-        self.text_splitter = SemanticChunker(embeddings=self.embeddings)
+        self.text_splitter = text_splitter
+        self.logger = logger or logging.getLogger(__name__)
 
     def balance_chunks(self, text: str) -> List[str]:
         chunks = self.text_splitter.split_text(text)
@@ -47,7 +53,7 @@ class MessagesHandler:
                 total_words - words_typed,
             )
 
-            await self.client(
+            await self.session(
                 SetTypingRequest(peer=user, action=SendMessageTypingAction())
             )
 
