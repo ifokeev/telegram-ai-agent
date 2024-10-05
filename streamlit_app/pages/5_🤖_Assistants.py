@@ -2,6 +2,7 @@ import streamlit as st
 from phi.assistant.assistant import Assistant
 from phi.llm.openai.chat import OpenAIChat
 from streamlit_app.utils.logging_utils import setup_logger
+from streamlit_app.utils.database.models import Assistant as AssistantModel
 from streamlit_app.utils.database.telegram_config import (
     get_all_telegram_configs,
     get_telegram_config,
@@ -36,6 +37,20 @@ else:
             ["Create Assistant", "Edit Assistant", "Manage Assistants"]
         )
 
+        def test_assistant(assistant_data):
+            try:
+                # Use the factory method to create the assistant
+                phi_assistant = create_phi_assistant(assistant_data)
+                # Test the assistant with a sample prompt
+                test_prompt = "Hello, how are you?"
+                response = phi_assistant.run(
+                    messages=[{"role": "user", "content": test_prompt}], stream=False
+                )
+                st.write(f"**Test Prompt:** {test_prompt}")
+                st.write(f"**Assistant Response:** {response}")
+            except Exception as e:
+                st.error(f"An error occurred during testing: {str(e)}")
+
         with tab1:
             st.header("Create New Assistant")
             name = st.text_input("Assistant Name")
@@ -45,20 +60,7 @@ else:
 
             if st.button("Create Assistant"):
                 try:
-                    openai_chat = OpenAIChat(api_key=api_key)
-                    assistant = Assistant(
-                        llm=openai_chat,
-                        run_id=name,
-                        description=description,
-                        instructions=[
-                            line.strip()
-                            for line in instructions.split("\n")
-                            if line.strip()
-                        ],
-                        add_datetime_to_instructions=True,
-                    )
-                    assistant.print_response("Hello, how are you?")
-
+                    # Save the assistant to the database
                     save_assistant(config.id, name, api_key, description, instructions)
                     logger.info(
                         f"Assistant '{name}' created successfully for {selected_phone}!"
@@ -69,6 +71,20 @@ else:
                 except Exception as e:
                     logger.error(f"Error creating assistant: {str(e)}")
                     st.error(f"An error occurred: {str(e)}")
+
+            # Add a "Test Assistant" button before creating the assistant
+            if st.button("Test Assistant", key="test_new_assistant"):
+                try:
+                    # Create a temporary assistant_data object
+                    assistant_data = AssistantModel(
+                        name=name,
+                        api_key=api_key,
+                        description=description,
+                        instructions=instructions,
+                    )
+                    test_assistant(assistant_data)
+                except Exception as e:
+                    st.error(f"An error occurred during testing: {str(e)}")
 
         with tab2:
             st.header("Edit Assistant")
@@ -97,6 +113,7 @@ else:
 
                     if st.button("Update Assistant"):
                         try:
+                            # Update the assistant in the database
                             update_assistant(
                                 selected_assistant.id,
                                 new_name,
@@ -114,6 +131,20 @@ else:
                         except Exception as e:
                             logger.error(f"Error updating assistant: {str(e)}")
                             st.error(f"An error occurred: {str(e)}")
+
+                    # Add a "Test Assistant" button
+                    if st.button("Test Assistant", key="test_existing_assistant"):
+                        try:
+                            # Create an updated assistant_data object
+                            assistant_data = AssistantModel(
+                                name=new_name,
+                                api_key=new_api_key,
+                                description=new_description,
+                                instructions=new_instructions,
+                            )
+                            test_assistant(assistant_data)
+                        except Exception as e:
+                            st.error(f"An error occurred during testing: {str(e)}")
             else:
                 st.info(
                     "No assistants found for this account. Create one in the 'Create Assistant' tab."
@@ -146,20 +177,3 @@ else:
                 st.info(
                     "No assistants found for this account. Create one in the 'Create Assistant' tab."
                 )
-
-if st.button("Test Assistant"):
-    try:
-        # Create assistant data object (this might be different depending on your implementation)
-        assistant_data = AssistantData(
-            name=name,
-            api_key=api_key,
-            description=description,
-            instructions=instructions,
-        )
-        phi_assistant = create_phi_assistant(assistant_data)
-        # Test the assistant with a sample message
-        response = phi_assistant.run(messages=[{"role": "user", "content": "Hello"}])
-        st.success(f"Assistant responded: {response}")
-    except Exception as e:
-        logger.error(f"Error testing assistant: {str(e)}")
-        st.error(f"An error occurred: {str(e)}")
