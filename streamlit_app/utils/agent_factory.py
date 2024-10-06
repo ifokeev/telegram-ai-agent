@@ -3,7 +3,7 @@ from streamlit_app.utils.assistant_factory import create_phi_assistant
 from streamlit_app.utils.database.telegram_config import get_telegram_config_by_id
 
 
-def create_telegram_ai_agent(assistant_data, logger=None):
+async def create_telegram_ai_agent(assistant_data, logger=None):
     """
     Factory method to create a TelegramAIAgent instance from assistant_data.
 

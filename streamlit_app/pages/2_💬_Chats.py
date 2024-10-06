@@ -53,6 +53,7 @@ else:
                         return await tools.get_dialogs(limit=limit)
 
                 dialogs = asyncio.run(show_chats())
+                print(dialogs)
                 if dialogs:
                     df = pd.DataFrame([{**d, "id": str(d["id"])} for d in dialogs])
                     st.dataframe(df)
@@ -136,10 +137,14 @@ else:
                 sender_name = getattr(sender, "first_name", None) or getattr(
                     sender, "title", "Unknown"
                 )
+                username = getattr(sender, "username", None)
 
                 col1, col2 = st.columns([1, 4])
                 with col1:
-                    st.markdown(f"**{sender_name}**")
+                    if username:
+                        st.markdown(f"**{sender_name}** (@{username})")
+                    else:
+                        st.markdown(f"**{sender_name}**")
                 with col2:
                     st.markdown(f"{msg.text}")
                 st.markdown("---")

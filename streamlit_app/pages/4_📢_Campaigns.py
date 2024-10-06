@@ -1,8 +1,11 @@
 import streamlit as st
+import asyncio
 import pandas as pd
-from streamlit_app.utils.database.telegram_config import get_all_telegram_configs
+from streamlit_app.utils.database.telegram_config import (
+    get_all_telegram_configs,
+)
 from streamlit_app.utils.database.segment import get_all_segments
-from streamlit_app.utils.database.assistant import get_assistants, get_all_assistants
+from streamlit_app.utils.database.assistant import get_assistants
 from streamlit_app.utils.database.campaigns import (
     create_campaign,
     get_all_campaigns,
@@ -14,6 +17,7 @@ from streamlit_app.utils.database.campaigns import (
     update_campaign,
 )
 from streamlit_app.utils.logging_utils import setup_logger
+from streamlit_app.utils.campaign_sender import send_campaign
 
 logger = setup_logger(__name__)
 
@@ -51,8 +55,13 @@ else:
             )
 
             if assistant:
-                tab1, tab2, tab3 = st.tabs(
-                    ["Create Campaign", "View Campaigns", "Edit Campaign"]
+                tab1, tab2, tab3, tab4 = st.tabs(
+                    [
+                        "Create Campaign",
+                        "View Campaigns",
+                        "Edit Campaign",
+                        "Send Campaign",
+                    ]
                 )
 
                 with tab1:
@@ -305,3 +314,73 @@ else:
                                     st.rerun()
                             else:
                                 st.info("No recipients for this campaign.")
+
+                with tab4:
+                    st.header("Send Campaign")
+
+                    campaigns = get_all_campaigns()
+                    campaigns = [c for c in campaigns if c.assistant_id == assistant.id]
+
+                    if not campaigns:
+                        st.info(
+                            "No campaigns found for this assistant. Create a new campaign in the 'Create Campaign' tab."
+                        )
+                    else:
+                        selected_campaign_id = st.selectbox(
+                            "Select Campaign to Send",
+                            [campaign.id for campaign in campaigns],
+                            format_func=lambda x: f"Campaign {x}",
+                            key="send_campaign_select",
+                        )
+
+                        selected_campaign = next(
+                            (c for c in campaigns if c.id == selected_campaign_id), None
+                        )
+
+                        if selected_campaign:
+                            st.subheader(f"Sending Campaign {selected_campaign.id}")
+
+                            # Display campaign details
+                            st.write(f"Segment: {selected_campaign.segment.name}")
+                            st.write(
+                                f"Message Template: {selected_campaign.message_template}"
+                            )
+                            st.write(
+                                f"Make Unique: {'Yes' if selected_campaign.make_unique else 'No'}"
+                            )
+                            st.write(f"Throttle: {selected_campaign.throttle} seconds")
+
+                            # Get campaign recipients
+                            recipients = get_campaign_recipients(selected_campaign.id)
+                            total_recipients = len(recipients)
+                            pending_recipients = [
+                                r for r in recipients if r.status == "Pending"
+                            ]
+
+                            st.write(f"Total Recipients: {total_recipients}")
+                            st.write(f"Pending Recipients: {len(pending_recipients)}")
+
+                            if st.button("Start Sending Campaign"):
+                                progress_bar = st.progress(0)
+                                status_text = st.empty()
+
+                                async def update_progress():
+                                    async for sent, total, status in send_campaign(
+                                        selected_campaign,
+                                        pending_recipients,
+                                        assistant,
+                                        logger,
+                                    ):
+                                        progress = sent / total
+                                        progress_bar.progress(progress)
+                                        status_text.text(
+                                            f"Processed: {sent}/{total} - Last status: {status}"
+                                        )
+                                        # Allow for UI update
+                                        await asyncio.sleep(0)
+
+                                # Run the async function
+                                asyncio.run(update_progress())
+
+                                st.success("Campaign sending completed!")
+                                st.rerun()

@@ -48,5 +48,6 @@ class InboundMessaging(MessagesHandler):
                 self.logger.info(f"Sent to {sender.username}: {response}")
             except Exception as e:
                 self.logger.error(f"Error processing message: {str(e)}")
+                raise e
 
         self.logger.info("Started processing incoming messages")

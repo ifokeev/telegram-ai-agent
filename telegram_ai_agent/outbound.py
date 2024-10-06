@@ -25,3 +25,4 @@ class OutboundMessaging(MessagesHandler):
                 await asyncio.sleep(e.seconds)
             except Exception as e:
                 self.logger.error(f"Error sending message to {recipient}: {str(e)}")
+                raise e

@@ -207,10 +207,12 @@ class TelegramTools:
         dialogs = []
         async for dialog in self.session.iter_dialogs(limit=limit):
             last_message = dialog.message.message if dialog.message else "No messages"
+            username = getattr(dialog.entity, "username", None)
             dialogs.append(
                 {
                     "id": str(dialog.id),
                     "name": dialog.name,
+                    "username": username,
                     "last_message": (
                         last_message[:50] + "..."
                         if len(last_message) > 50
