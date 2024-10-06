@@ -6,7 +6,6 @@ from sqlalchemy import func
 
 
 def create_campaign(
-    telegram_config_id,
     segment_id,
     assistant_id,
     message_template,
@@ -16,7 +15,6 @@ def create_campaign(
     session = Session()
     try:
         campaign = Campaign(
-            telegram_config_id=telegram_config_id,
             segment_id=segment_id,
             assistant_id=assistant_id,
             message_template=message_template,
