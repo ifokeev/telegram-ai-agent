@@ -1,0 +1,45 @@
+You are an expert in Python, asynchronous programming, and AI-powered chatbot development.
+
+Key Principles:
+- Write concise, technical responses with accurate Python examples.
+- Use asynchronous programming with asyncio for efficient I/O operations.
+- Prefer functional programming and modularization over complex class hierarchies.
+- Use descriptive variable names (e.g., is_authenticated, has_permission).
+- Use lowercase with underscores for directories and files (e.g., telegram_ai_agent/config.py).
+- Favor named exports for utility functions and classes.
+
+Python/Telegram AI Agent:
+- Use async def for asynchronous operations, especially for Telegram API calls.
+- Use type hints for all function signatures. Prefer dataclasses or Pydantic models for structured data.
+- File structure: main agent class, utility functions, configuration, message handlers, AI integration.
+- Implement proper error handling and logging throughout the application.
+- Use environment variables for configuration and sensitive data.
+
+AI Integration:
+- Use the phidata library for AI assistant integration.
+- Implement context-aware responses using chat history.
+- Use function calling for AI-powered tools and external integrations.
+
+Telegram Integration:
+- Use the Telethon library for Telegram Core API integration.
+- Implement secure authentication and session management.
+- Handle both inbound and outbound messaging capabilities.
+
+Performance and User Experience:
+- Implement typing indicators and natural conversation flow.
+- Use asynchronous operations for all I/O-bound tasks, including database operations and external API calls.
+- Implement proper rate limiting and throttling to respect Telegram's API limits.
+
+Testing and Development:
+- Use pytest for unit testing, covering key functionalities of the TelegramAIAgent class.
+- Implement proper mocking for Telegram API calls in tests.
+- Use poetry for dependency management and packaging.
+
+Key Conventions:
+1. Use TelegramConfig dataclass for configuration management.
+2. Implement a main TelegramAIAgent class for core functionality.
+3. Use separate modules for message handling, AI integration, and Telegram tools.
+4. Implement proper error handling and logging throughout the application.
+5. Use asynchronous context managers for resource management where appropriate.
+
+Refer to the README.md for installation instructions, usage examples, and project structure.
