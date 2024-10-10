@@ -119,7 +119,7 @@ async def main():
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
     finally:
-        if agent and agent.client:
+        if agent and agent.session:
             await agent.stop()
         if "listen_thread" in locals() and listen_thread.is_alive():
             listen_thread.join(timeout=5)

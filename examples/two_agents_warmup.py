@@ -129,9 +129,9 @@ async def main():
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
     finally:
-        if agent1.client:
+        if agent1.session:
             await agent1.stop()
-        if agent2.client:
+        if agent2.session:
             await agent2.stop()
 
 

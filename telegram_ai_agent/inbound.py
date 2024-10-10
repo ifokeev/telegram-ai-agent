@@ -1,22 +1,15 @@
 import asyncio
-import logging
 import random
 from typing import List, Dict, Any
 from telethon import events
 from phi.assistant.assistant import Assistant
-from typing import List, Dict, Any
-from .config import TelegramConfig
 from .messages_handler import MessagesHandler
 
 
 class InboundMessaging(MessagesHandler):
-    def __init__(self, client, config: TelegramConfig, logger=None):
-        super().__init__(client, config)
-        self.logger = logger or logging.getLogger(__name__)
-
     async def get_chat_history(self, user_id: int) -> List[Dict[str, Any]]:
         messages = []
-        async for message in self.client.iter_messages(
+        async for message in self.session.iter_messages(
             user_id, limit=self.config.chat_history_limit
         ):
             role = "user" if message.out else "assistant"
@@ -24,7 +17,7 @@ class InboundMessaging(MessagesHandler):
         return messages[::-1]  # Reverse to get chronological order
 
     async def process_messages(self, assistant: Assistant):
-        @self.client.on(events.NewMessage(incoming=True))
+        @self.session.on(events.NewMessage(incoming=True))
         async def handle_new_message(event):
             try:
                 sender = await event.get_sender()
@@ -38,7 +31,7 @@ class InboundMessaging(MessagesHandler):
                     self.config.min_read_delay, self.config.max_read_delay
                 )
                 await asyncio.sleep(read_delay)
-                await self.client.send_read_acknowledge(sender, event.message)
+                await self.session.send_read_acknowledge(sender, event.message)
 
                 chat_history = await self.get_chat_history(user_id)
                 messages = [*chat_history, {"role": "user", "content": event.text}]
@@ -50,10 +43,11 @@ class InboundMessaging(MessagesHandler):
                         await event.reply(message)
                         first_message = False
                     else:
-                        await self.client.send_message(sender, message)
+                        await self.session.send_message(sender, message)
 
                 self.logger.info(f"Sent to {sender.username}: {response}")
             except Exception as e:
                 self.logger.error(f"Error processing message: {str(e)}")
+                raise e
 
         self.logger.info("Started processing incoming messages")

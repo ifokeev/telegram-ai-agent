@@ -12,6 +12,8 @@ This Python library provides a framework for creating AI-powered Telegram bots u
 - Asynchronous operations using asyncio
 - Typing indicators for a more natural conversation flow
 - Function calling for AI-powered tools
+- Customizable logging
+- Streamlit UI for easy interaction with the agent
 
 ## Installation
 
@@ -25,8 +27,8 @@ To install the library, follow these steps:
 
 2. Create and activate a virtual environment (optional but recommended):
    ```sh
-   python -m venv venv
-   source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+   python -m venv .venv
+   source .venv/bin/activate  # On Windows, use `.venv\Scripts\activate`
    ```
 
 3. Install the package in editable mode:
@@ -38,9 +40,19 @@ This will install the library and its dependencies, allowing you to use it in yo
 
 Note: Make sure you have Python 3.11 or higher installed on your system before proceeding with the installation.
 
+## Streamlit UI
+
+To run the Streamlit UI, run the following command:
+
+```sh
+streamlit run streamlit_app/Home.py
+```
+
+and navigate to `http://localhost:8501` in your web browser.
+
 ## Configuration
 
-To configure the Telegram AI Agent, you need to set up environment variables. You can do this by either creating a `.env` file or copying from the provided `.env.example` file.
+To configure the Telegram AI Agent library, you need to set up environment variables. You can do this by either creating a `.env` file or copying from the provided `.env.example` file.
 
 ### Option 1: Create a new .env file
 
@@ -93,7 +105,7 @@ assistant = Assistant(
     llm=openai_chat,
     run_id="telegram_ai_agent",
     description="Sales representative for a tech company",
-    instructions="You are a sales representative for a tech company. You are tasked with selling a product to the user."
+    instructions=["You are a sales representative for a tech company. You are tasked with selling a product to the user."]
 )
 
 # Create Telegram configuration

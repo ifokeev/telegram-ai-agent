@@ -5,3 +5,6 @@ __pycache__
 *.pyc
 .env
 .pytest_cache
+members.csv
+streamlit_app/sessions
+sqlite.db
