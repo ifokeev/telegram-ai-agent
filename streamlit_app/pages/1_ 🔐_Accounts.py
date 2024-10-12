@@ -27,6 +27,10 @@ with tab1:
     api_id = st.text_input("API ID")
     api_hash = st.text_input("API Hash", type="password")
 
+    # Create placeholders for code and password inputs
+    code_placeholder = st.empty()
+    password_placeholder = st.empty()
+
     if st.button("Authorize"):
         SESSIONS_FOLDER.mkdir(parents=True, exist_ok=True)
         session_path = SESSIONS_FOLDER / f"session_{phone_number}"
@@ -38,8 +42,21 @@ with tab1:
             phone_number=phone_number,
         )
 
+        async def get_code():
+            return code_placeholder.text_input("Enter the code you received:")
+
+        async def get_password():
+            return password_placeholder.text_input(
+                "Enter your 2FA password:", type="password"
+            )
+
         async def authorize():
-            session = TelegramSession(config, logger=logger)
+            session = TelegramSession(
+                config,
+                code_callback=get_code,
+                twofa_password_callback=get_password,
+                logger=logger,
+            )
             try:
                 await session.start()
                 save_telegram_config(phone_number, api_id, api_hash, str(session_path))

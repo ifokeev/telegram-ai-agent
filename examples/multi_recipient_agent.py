@@ -96,11 +96,25 @@ def run_listen_thread(agent):
     asyncio.run(listen_for_messages(agent))
 
 
+async def get_code():
+    return input("Enter the code you received: ")
+
+
+async def get_password():
+    return input("Enter your password: ")
+
+
 async def main():
     agent = None
     try:
         # Create and start the Telegram AI Agent
-        agent = TelegramAIAgent(assistant, telegram_config, logger=logger)
+        agent = TelegramAIAgent(
+            assistant,
+            telegram_config,
+            logger=logger,
+            code_callback=get_code,
+            twofa_password_callback=get_password,
+        )
         await agent.start()
 
         # Start listening for incoming messages in a separate thread

@@ -114,11 +114,31 @@ async def warmup_agents(agent1, agent2):
         await asyncio.sleep(sleep_time)
 
 
+async def get_code():
+    return input("Enter the code you received: ")
+
+
+async def get_password():
+    return input("Enter your password: ")
+
+
 async def main():
     try:
         # Create and start the Telegram AI Agents
-        agent1 = TelegramAIAgent(assistant1, config1, logger=logger)
-        agent2 = TelegramAIAgent(assistant2, config2, logger=logger)
+        agent1 = TelegramAIAgent(
+            assistant1,
+            config1,
+            logger=logger,
+            code_callback=get_code,
+            twofa_password_callback=get_password,
+        )
+        agent2 = TelegramAIAgent(
+            assistant2,
+            config2,
+            logger=logger,
+            code_callback=get_code,
+            twofa_password_callback=get_password,
+        )
 
         await agent1.start()
         await agent2.start()

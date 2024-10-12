@@ -3,10 +3,17 @@ import asyncio
 from telethon import TelegramClient as TelethonClient
 from telethon.errors import SessionPasswordNeededError
 from .config import TelegramConfig
+from typing import Optional, Callable
 
 
 class TelegramSession(TelethonClient):
-    def __init__(self, config: TelegramConfig, logger=None):
+    def __init__(
+        self,
+        config: TelegramConfig,
+        code_callback: Optional[Callable[[], asyncio.Future[str]]] = None,
+        twofa_password_callback: Optional[Callable[[], asyncio.Future[str]]] = None,
+        logger=None,
+    ):
         self.logger = logger or logging.getLogger(__name__)
         self.verify_config(config)
 
@@ -24,6 +31,8 @@ class TelegramSession(TelethonClient):
         super().__init__(**client_params)
 
         self.config = config
+        self.code_callback = code_callback
+        self.twofa_password_callback = twofa_password_callback
 
     def verify_config(self, config: TelegramConfig):
         if not config.session_name:
@@ -64,14 +73,24 @@ class TelegramSession(TelethonClient):
                 await self.send_code_request(self.config.phone_number)
                 self.logger.info("Code request sent. Check your Telegram app.")
 
-                code = input("Enter the code you received: ")
+                if not self.code_callback:
+                    raise ValueError(
+                        "No code_callback provided for receiving the code."
+                    )
+
+                code = await self.code_callback()
 
                 try:
                     self.logger.info("Signing in with the provided code...")
                     await self.sign_in(self.config.phone_number, code)
                 except SessionPasswordNeededError:
                     self.logger.info("Two-step verification is enabled.")
-                    password = input("Enter your password: ")
+                    if not self.twofa_password_callback:
+                        raise ValueError(
+                            "No twofa_password_callback provided for receiving the password."
+                        )
+
+                    password = await self.twofa_password_callback()
                     await self.sign_in(password=password)
 
             self.logger.info(
@@ -95,9 +114,6 @@ class TelegramSession(TelethonClient):
                 await super().sign_in(password=password)
             else:
                 raise ValueError("Code or password must be provided")
-            self.logger.info(
-                f"Successfully authenticated for {self.config.phone_number}"
-            )
         except SessionPasswordNeededError:
             self.logger.info("Two-step verification enabled. Password required.")
             raise
@@ -111,3 +127,11 @@ class TelegramSession(TelethonClient):
             self.logger.info("Telegram client stopped")
         else:
             self.logger.info("Telegram client was not connected")
+
+    def set_code_callback(self, code_callback: Callable[[], asyncio.Future[str]]):
+        self.code_callback = code_callback
+
+    def set_twofa_password_callback(
+        self, twofa_password_callback: Callable[[], asyncio.Future[str]]
+    ):
+        self.twofa_password_callback = twofa_password_callback

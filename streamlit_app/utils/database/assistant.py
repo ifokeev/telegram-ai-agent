@@ -1,5 +1,6 @@
 from .session import Session
 from .models import Assistant
+from sqlalchemy.orm import joinedload
 
 
 def save_assistant(telegram_config_id, name, api_key, description, instructions):
@@ -44,7 +45,12 @@ def get_all_assistants():
 def get_assistant_by_id(assistant_id):
     session = Session()
     try:
-        return session.query(Assistant).filter_by(id=assistant_id).first()
+        return (
+            session.query(Assistant)
+            .options(joinedload(Assistant.telegram_config))
+            .filter_by(id=assistant_id)
+            .first()
+        )
     finally:
         session.close()
 

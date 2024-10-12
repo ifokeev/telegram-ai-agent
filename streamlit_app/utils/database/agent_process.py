@@ -3,6 +3,7 @@ import os
 import signal
 import asyncio
 import logging
+import streamlit as st
 from .assistant import get_assistant_by_id, update_assistant_status
 from ..agent_factory import create_telegram_ai_agent
 
@@ -15,9 +16,25 @@ def run_agent_process(assistant_id):
     # Get the assistant data from the database
     assistant_data = get_assistant_by_id(assistant_id)
 
+    async def get_code():
+        return st.text_input("Enter the authentication code:")
+
+    async def get_password():
+        return st.text_input("Enter the 2FA password:", type="password")
+
     async def async_run():
+        if not assistant_data:
+            logger.error(f"Assistant data not found for assistant ID {assistant_id}")
+            return
+
         # Create the Telegram AI Agent using the factory method
-        agent = await create_telegram_ai_agent(assistant_data, logger=logger)
+        agent = await create_telegram_ai_agent(
+            assistant_data,
+            session_name=f"agent-{assistant_data.id}",
+            logger=logger,
+            code_callback=get_code,
+            twofa_password_callback=get_password,
+        )
 
         try:
             await agent.run()

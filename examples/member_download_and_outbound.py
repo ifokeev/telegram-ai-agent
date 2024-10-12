@@ -73,10 +73,24 @@ async def generate_unique_message(assistant, default_message):
     return response.content
 
 
+async def get_code():
+    return input("Enter the code you received: ")
+
+
+async def get_password():
+    return input("Enter your password: ")
+
+
 async def main():
     try:
         # Create and start the Telegram AI Agent
-        agent = TelegramAIAgent(assistant, telegram_config, logger=logger)
+        agent = TelegramAIAgent(
+            assistant,
+            telegram_config,
+            logger=logger,
+            code_callback=get_code,
+            twofa_password_callback=get_password,
+        )
         await agent.start()
 
         # Download members
