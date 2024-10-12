@@ -85,7 +85,7 @@ else:
                 ):
                     # Create a unique session file name for this agent process
                     process_session_file = (
-                        SESSIONS_FOLDER / f"agent_process_{assistant.id}.session"
+                        SESSIONS_FOLDER / f"agent_process_{assistant.id}"
                     )
 
                     # Create TelegramConfig
@@ -97,7 +97,7 @@ else:
                     )
 
                     # Run authorization
-                    auth_success, _ = authorize(config, logger)
+                    auth_success, session = authorize(config, logger, stop_session=True)
                     if auth_success:
                         # Start the agent process with the unique session file
                         start_agent_process(assistant.id, str(process_session_file))

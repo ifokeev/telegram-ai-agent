@@ -56,11 +56,13 @@ class TelegramAIAgent:
 
     async def start(self):
         try:
-            self.logger.info("Starting Telegram AI Agent...")
-            await self.session.start()
-            self.logger.info(
-                "Successfully started and authorized the Telegram AI Agent."
-            )
+            if not self.session.is_connected():
+                self.logger.info("Starting Telegram AI Agent...")
+                await self.session.start()
+
+                self.logger.info(
+                    "Successfully started and authorized the Telegram AI Agent."
+                )
         except Exception as e:
             self.logger.error(f"An error occurred while starting the agent: {e}")
             raise

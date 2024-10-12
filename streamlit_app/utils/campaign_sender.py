@@ -48,8 +48,11 @@ class CampaignSender:
 async def send_campaign(campaign, recipients, assistant_data, logger):
     agent = await create_telegram_ai_agent(assistant_data, logger)
     sender = CampaignSender(agent, logger)
-    async for sent, total, status in sender.send_campaign(campaign, recipients):
-        yield sent, total, status
+    try:
+        async for sent, total, status in sender.send_campaign(campaign, recipients):
+            yield sent, total, status
+    finally:
+        await agent.stop()
 
 
 def run_send_campaign(campaign, recipients, assistant_data, logger):

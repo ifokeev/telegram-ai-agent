@@ -116,16 +116,28 @@ telegram_config = TelegramConfig(
     phone_number=os.getenv("TELEGRAM_PHONE_NUMBER"),
 )
 
+async def get_code():
+    return input("Enter the code you received: ")
+
+async def get_password():
+    return input("Enter your password: ")
+
 async def main():
     try:
         # Create and start the Telegram AI Agent
-        agent = TelegramAIAgent(assistant, telegram_config, logger=logger)
+        agent = TelegramAIAgent(
+            assistant,
+            telegram_config,
+            logger=logger,
+            code_callback=get_code,
+            twofa_password_callback=get_password,
+        )
         # Run agent inbound processing until disconnected
         await agent.run()
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}")
     finally:
-        if agent.client:
+        if agent.session:
             await agent.stop()
 
 if __name__ == "__main__":

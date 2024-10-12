@@ -20,6 +20,8 @@ def run_agent_process(assistant_id, session_name):
             logger.error(f"Assistant data not found for assistant ID {assistant_id}")
             return
 
+        agent = None
+
         try:
             # Create the Telegram AI Agent using the factory method
             agent = await create_telegram_ai_agent(
@@ -32,7 +34,8 @@ def run_agent_process(assistant_id, session_name):
             logger.error(f"Agent {assistant_data.name} encountered an error: {e}")
         finally:
             # Stop the session
-            await agent.stop()
+            if agent:
+                await agent.stop()
             # Update the assistant status in the database
             update_assistant_status(assistant_id, status="Stopped", pid=None)
 

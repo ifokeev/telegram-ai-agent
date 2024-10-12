@@ -10,6 +10,7 @@ from streamlit_app.utils.database.telegram_config import (
     get_telegram_config,
 )
 from streamlit_app.utils.logging_utils import setup_logger
+from streamlit_app.utils.auth_utils import try_auth
 
 logger = setup_logger(__name__)
 
@@ -46,11 +47,18 @@ else:
                 )
 
                 async def show_chats():
-                    async with TelegramSession(
-                        telegram_config, logger=logger
-                    ) as client:
-                        tools = TelegramTools(client, logger=logger)
-                        return await tools.get_dialogs(limit=limit)
+                    auth_success, session = await try_auth(telegram_config, logger)
+                    if not auth_success:
+                        return []
+
+                    if session is None:
+                        st.error("Failed to authorize. Please try again.")
+                        return []
+
+                    tools = TelegramTools(session, logger=logger)
+                    dialogs = await tools.get_dialogs(limit=limit)
+                    await session.stop()
+                    return dialogs
 
                 dialogs = asyncio.run(show_chats())
                 print(dialogs)
@@ -75,16 +83,21 @@ else:
                 )
 
                 async def download_members():
-                    async with TelegramSession(
-                        telegram_config, logger=logger
-                    ) as client:
-                        tools = TelegramTools(client, logger=logger)
-                        return await tools.get_chat_members(
-                            chat_identifier,
-                            file_name,
-                            include_kick_ban=include_kick_ban,
-                            output_dir=str(current_dir),
-                        )
+                    auth_success, session = await try_auth(telegram_config, logger)
+
+                    if not auth_success or session is None:
+                        st.error("Failed to authorize. Please try again.")
+                        return 0
+
+                    tools = TelegramTools(session, logger=logger)
+                    count = await tools.get_chat_members(
+                        chat_identifier,
+                        file_name,
+                        include_kick_ban=include_kick_ban,
+                        output_dir=str(current_dir),
+                    )
+                    await session.stop()
+                    return count
 
                 member_count = asyncio.run(download_members())
                 st.success(f"Downloaded {member_count} members to {file_name}")
@@ -110,13 +123,17 @@ else:
                 )
 
                 async def open_chat():
-                    async with TelegramSession(
-                        telegram_config, logger=logger
-                    ) as client:
-                        tools = TelegramTools(client, logger=logger)
-                        chat = await tools.find_chat(chat_id)
-                        messages = await client.get_messages(chat, limit=message_limit)
-                        return chat, messages
+                    auth_success, session = await try_auth(telegram_config, logger)
+
+                    if not auth_success or session is None:
+                        st.error("Failed to authorize. Please try again.")
+                        return None, []
+
+                    tools = TelegramTools(session, logger=logger)
+                    chat = await tools.find_chat(chat_id)
+                    messages = await session.get_messages(chat, limit=message_limit)
+                    await session.stop()
+                    return chat, messages
 
                 chat, messages = asyncio.run(open_chat())
                 st.session_state.chat = chat
@@ -161,16 +178,19 @@ else:
                     )
 
                     async def send_message():
-                        async with TelegramSession(
-                            telegram_config, logger=logger
-                        ) as client:
-                            await client.send_message(
-                                st.session_state.chat, user_message
-                            )
-                            new_messages = await client.get_messages(
-                                st.session_state.chat, limit=message_limit
-                            )
-                            return new_messages
+                        auth_success, session = await try_auth(telegram_config, logger)
+
+                        if not auth_success or session is None:
+                            st.error("Failed to authorize. Please try again.")
+                            return []
+
+                        await session.send_message(st.session_state.chat, user_message)
+
+                        new_messages = await session.get_messages(
+                            st.session_state.chat, limit=message_limit
+                        )
+                        await session.stop()
+                        return new_messages
 
                     st.session_state.chat_messages = asyncio.run(send_message())
                     st.success("Message sent!")

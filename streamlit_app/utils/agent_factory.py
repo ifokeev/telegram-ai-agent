@@ -3,6 +3,7 @@ from streamlit_app.utils.assistant_factory import create_phi_assistant
 from typing import Optional, Callable
 import asyncio
 from pathlib import Path
+from streamlit_app.utils.auth_utils import try_auth
 
 current_dir = Path(__file__).parents[1].resolve()
 SESSIONS_FOLDER = current_dir / "sessions"
@@ -45,11 +46,17 @@ async def create_telegram_ai_agent(
         phone_number=assistant_data.telegram_config.phone_number,
     )
 
+    auth_success, session = await try_auth(telegram_config, logger)
+
+    if not auth_success or session is None:
+        raise ValueError("Failed to authorize. Please try again.")
+
     # Create the Telegram AI Agent
     agent = TelegramAIAgent(
         phi_assistant,
         telegram_config,
         logger=logger,
+        session=session,
         code_callback=code_callback,
         twofa_password_callback=twofa_password_callback,
     )
