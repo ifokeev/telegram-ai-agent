@@ -27,6 +27,7 @@ def get_assistants(telegram_config_id):
     try:
         return (
             session.query(Assistant)
+            .options(joinedload(Assistant.telegram_config))
             .filter_by(telegram_config_id=telegram_config_id)
             .all()
         )
@@ -37,7 +38,11 @@ def get_assistants(telegram_config_id):
 def get_all_assistants():
     session = Session()
     try:
-        return session.query(Assistant).all()
+        return (
+            session.query(Assistant)
+            .options(joinedload(Assistant.telegram_config))
+            .all()
+        )
     finally:
         session.close()
 
