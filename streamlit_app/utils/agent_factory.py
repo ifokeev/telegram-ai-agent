@@ -1,8 +1,11 @@
 from telegram_ai_agent import TelegramAIAgent, TelegramConfig
 from streamlit_app.utils.assistant_factory import create_phi_assistant
-from streamlit_app.utils.database.telegram_config import get_telegram_config_by_id
 from typing import Optional, Callable
 import asyncio
+from pathlib import Path
+
+current_dir = Path(__file__).parents[1].resolve()
+SESSIONS_FOLDER = current_dir / "sessions"
 
 
 async def create_telegram_ai_agent(
@@ -18,6 +21,7 @@ async def create_telegram_ai_agent(
     Args:
         assistant_data: An object containing assistant attributes.
         logger (optional): A logger instance.
+        session_name (optional): Name for the session.
         code_callback (optional): Callback function for getting authentication code.
         twofa_password_callback (optional): Callback function for getting 2FA password.
 
