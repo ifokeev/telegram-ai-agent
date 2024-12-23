@@ -217,7 +217,7 @@ class TelegramTools:
                     "username": username,
                     "last_message": (
                         last_message[:50] + "..."
-                        if len(last_message) > 50
+                        if last_message and len(last_message) > 50
                         else last_message
                     ),
                     "unread_count": dialog.unread_count,
