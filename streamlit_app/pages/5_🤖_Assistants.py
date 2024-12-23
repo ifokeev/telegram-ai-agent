@@ -52,33 +52,38 @@ else:
                 st.error(f"An error occurred during testing: {str(e)}")
 
         def render_proxy_fields(
-            prefix="", proxy_scheme=None, proxy_hostname=None, proxy_port=None
+            prefix="",
+            proxy_type=None,
+            proxy_addr=None,
+            proxy_port=None,
+            proxy_username=None,
+            proxy_password=None,
+            proxy_rdns=True,
         ):
             """Render proxy configuration fields"""
             st.subheader("Proxy Configuration (Optional)")
-            col1, col2, col3 = st.columns(3)
 
+            col1, col2 = st.columns(2)
             with col1:
-                scheme = st.selectbox(
-                    "Proxy Scheme",
-                    options=["", "socks5", "http", "https"],
-                    key=f"{prefix}proxy_scheme",
+                proxy_type = st.selectbox(
+                    "Proxy Type",
+                    options=["", "socks5", "socks4", "http"],
+                    key=f"{prefix}proxy_type",
                     index=(
                         0
-                        if not proxy_scheme
-                        else ["", "socks5", "http", "https"].index(proxy_scheme)
+                        if not proxy_type
+                        else ["", "socks5", "socks4", "http"].index(proxy_type)
                     ),
                 )
 
-            with col2:
-                hostname = st.text_input(
-                    "Proxy Hostname",
-                    value=proxy_hostname or "",
-                    key=f"{prefix}proxy_hostname",
+                proxy_addr = st.text_input(
+                    "Proxy Address",
+                    value=proxy_addr or "",
+                    key=f"{prefix}proxy_addr",
+                    help="IP address or hostname of the proxy",
                 )
 
-            with col3:
-                port = st.number_input(
+                proxy_port = st.number_input(
                     "Proxy Port",
                     min_value=0,
                     max_value=65535,
@@ -86,7 +91,35 @@ else:
                     key=f"{prefix}proxy_port",
                 )
 
-            return scheme, hostname, port if port > 0 else None
+            with col2:
+                proxy_username = st.text_input(
+                    "Proxy Username (Optional)",
+                    value=proxy_username or "",
+                    key=f"{prefix}proxy_username",
+                )
+
+                proxy_password = st.text_input(
+                    "Proxy Password (Optional)",
+                    value=proxy_password or "",
+                    type="password",
+                    key=f"{prefix}proxy_password",
+                )
+
+                proxy_rdns = st.checkbox(
+                    "Remote DNS Resolution",
+                    value=proxy_rdns,
+                    key=f"{prefix}proxy_rdns",
+                    help="Whether to use remote or local DNS resolution",
+                )
+
+            return (
+                proxy_type,
+                proxy_addr,
+                proxy_port if proxy_port > 0 else None,
+                proxy_username or None,
+                proxy_password or None,
+                proxy_rdns,
+            )
 
         def render_advanced_config(prefix="", assistant=None):
             """Render advanced configuration fields in an expander"""
@@ -296,9 +329,14 @@ else:
             instructions = st.text_area("Instructions (one per line)")
 
             # Add proxy configuration
-            proxy_scheme, proxy_hostname, proxy_port = render_proxy_fields(
-                prefix="create_"
-            )
+            (
+                proxy_type,
+                proxy_addr,
+                proxy_port,
+                proxy_username,
+                proxy_password,
+                proxy_rdns,
+            ) = render_proxy_fields(prefix="create_")
 
             # Add advanced configuration
             advanced_config = render_advanced_config(prefix="create_")
@@ -311,9 +349,12 @@ else:
                         api_key,
                         description,
                         instructions,
-                        proxy_scheme,
-                        proxy_hostname,
+                        proxy_type,
+                        proxy_addr,
                         proxy_port,
+                        proxy_username,
+                        proxy_password,
+                        proxy_rdns,
                         **advanced_config,  # Include all advanced settings
                     )
                     logger.info(
@@ -366,13 +407,21 @@ else:
                     )
 
                     # Add proxy configuration
-                    new_proxy_scheme, new_proxy_hostname, new_proxy_port = (
-                        render_proxy_fields(
-                            prefix="edit_",
-                            proxy_scheme=selected_assistant.proxy_scheme,
-                            proxy_hostname=selected_assistant.proxy_hostname,
-                            proxy_port=selected_assistant.proxy_port,
-                        )
+                    (
+                        new_proxy_type,
+                        new_proxy_addr,
+                        new_proxy_port,
+                        new_proxy_username,
+                        new_proxy_password,
+                        new_proxy_rdns,
+                    ) = render_proxy_fields(
+                        prefix="edit_",
+                        proxy_type=selected_assistant.proxy_type,
+                        proxy_addr=selected_assistant.proxy_addr,
+                        proxy_port=selected_assistant.proxy_port,
+                        proxy_username=selected_assistant.proxy_username,
+                        proxy_password=selected_assistant.proxy_password,
+                        proxy_rdns=selected_assistant.proxy_rdns,
                     )
 
                     # Add advanced configuration
@@ -388,9 +437,12 @@ else:
                                 new_api_key,
                                 new_description,
                                 new_instructions,
-                                new_proxy_scheme,
-                                new_proxy_hostname,
+                                new_proxy_type,
+                                new_proxy_addr,
                                 new_proxy_port,
+                                new_proxy_username,
+                                new_proxy_password,
+                                new_proxy_rdns,
                                 **new_advanced_config,  # Include all advanced settings
                             )
                             logger.info(

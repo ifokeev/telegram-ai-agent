@@ -44,15 +44,21 @@ async def create_telegram_ai_agent(
     # Create proxy dict if proxy settings are provided
     proxy = None
     if (
-        assistant_data.proxy_scheme
-        and assistant_data.proxy_hostname
+        assistant_data.proxy_type
+        and assistant_data.proxy_addr
         and assistant_data.proxy_port
     ):
         proxy = {
-            "scheme": assistant_data.proxy_scheme,
-            "hostname": assistant_data.proxy_hostname,
+            "proxy_type": assistant_data.proxy_type,
+            "addr": assistant_data.proxy_addr,
             "port": assistant_data.proxy_port,
+            "rdns": assistant_data.proxy_rdns,
         }
+
+        # Add authentication if provided
+        if assistant_data.proxy_username and assistant_data.proxy_password:
+            proxy["username"] = assistant_data.proxy_username
+            proxy["password"] = assistant_data.proxy_password
 
     # Create TelegramConfig instance with all advanced settings
     telegram_config = TelegramConfig(

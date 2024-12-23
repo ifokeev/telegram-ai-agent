@@ -37,10 +37,13 @@ class Assistant(Base):
     status = Column(String, default="Stopped")
     pid = Column(Integer, nullable=True)
 
-    # Proxy settings
-    proxy_scheme = Column(String, nullable=True)
-    proxy_hostname = Column(String, nullable=True)
+    # Updated proxy settings
+    proxy_type = Column(String, nullable=True)  # socks5, socks4, http
+    proxy_addr = Column(String, nullable=True)
     proxy_port = Column(Integer, nullable=True)
+    proxy_username = Column(String, nullable=True)
+    proxy_password = Column(String, nullable=True)
+    proxy_rdns = Column(Boolean, default=True)
 
     # Advanced settings
     timeout = Column(Integer, default=30)

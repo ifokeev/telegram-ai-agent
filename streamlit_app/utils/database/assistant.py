@@ -13,9 +13,12 @@ def save_assistant(
     api_key,
     description,
     instructions,
-    proxy_scheme=None,
-    proxy_hostname=None,
+    proxy_type=None,
+    proxy_addr=None,
     proxy_port=None,
+    proxy_username=None,
+    proxy_password=None,
+    proxy_rdns=True,
     timeout=30,
     set_typing=True,
     typing_delay_factor=0.05,
@@ -42,9 +45,12 @@ def save_assistant(
             api_key=api_key,
             description=description,
             instructions=instructions,
-            proxy_scheme=proxy_scheme,
-            proxy_hostname=proxy_hostname,
+            proxy_type=proxy_type,
+            proxy_addr=proxy_addr,
             proxy_port=proxy_port,
+            proxy_username=proxy_username,
+            proxy_password=proxy_password,
+            proxy_rdns=proxy_rdns,
             # Advanced settings
             timeout=timeout,
             set_typing=set_typing,
@@ -127,9 +133,12 @@ def update_assistant(
     api_key,
     description,
     instructions,
-    proxy_scheme=None,
-    proxy_hostname=None,
+    proxy_type=None,
+    proxy_addr=None,
     proxy_port=None,
+    proxy_username=None,
+    proxy_password=None,
+    proxy_rdns=True,
     timeout=30,
     set_typing=True,
     typing_delay_factor=0.05,
@@ -156,9 +165,12 @@ def update_assistant(
             assistant.api_key = api_key
             assistant.description = description
             assistant.instructions = instructions
-            assistant.proxy_scheme = proxy_scheme
-            assistant.proxy_hostname = proxy_hostname
+            assistant.proxy_type = proxy_type
+            assistant.proxy_addr = proxy_addr
             assistant.proxy_port = proxy_port
+            assistant.proxy_username = proxy_username
+            assistant.proxy_password = proxy_password
+            assistant.proxy_rdns = proxy_rdns
             # Update advanced settings
             assistant.timeout = timeout
             assistant.set_typing = set_typing

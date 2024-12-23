@@ -118,12 +118,12 @@ TELEGRAM_PHONE_NUMBER=your_phone_number_here
 OPENAI_API_KEY=your_openai_api_key_here
 
 # Optional: Proxy settings
-# PROXY_SCHEME=socks5
-# PROXY_HOSTNAME=localhost
-# PROXY_PORT=9150
+# PROXY_TYPE=socks5
+# PROXY_ADDR=1.1.1.1
+# PROXY_PORT=5555
+# PROXY_USERNAME=username
+# PROXY_PASSWORD=password
 
-# Optional: Custom timeout (in seconds)
-# TELEGRAM_TIMEOUT=60
 ```
 
 Replace the placeholder values with your actual Telegram API credentials and OpenAI API key.
@@ -151,6 +151,25 @@ load_dotenv()
 setup_logging()
 logger = logging.getLogger(__name__)
 
+# Optional: Load proxy settings if provided
+proxy = None
+if (
+    os.getenv("PROXY_TYPE")
+    and os.getenv("PROXY_ADDR")
+    and os.getenv("PROXY_PORT")
+):
+    proxy = {
+        'proxy_type': os.getenv("PROXY_TYPE"),  # socks5, socks4, or http
+        'addr': os.getenv("PROXY_ADDR"),
+        'port': int(os.getenv("PROXY_PORT")),
+        'rdns': True  # Use remote DNS resolution
+    }
+
+    # Add proxy authentication if provided
+    if os.getenv("PROXY_USERNAME") and os.getenv("PROXY_PASSWORD"):
+        proxy['username'] = os.getenv("PROXY_USERNAME")
+        proxy['password'] = os.getenv("PROXY_PASSWORD")
+
 # Create OpenAI assistant
 openai_chat = OpenAIChat(api_key=os.getenv("OPENAI_API_KEY"))
 assistant = Assistant(
@@ -164,8 +183,17 @@ assistant = Assistant(
 telegram_config = TelegramConfig(
     session_name="session_1",
     api_id=int(os.getenv("TELEGRAM_API_ID")),
-    api_hash=os.getenv("TELEGRAM_API_HASH"),
+    api_hash=os.getenv("TELEGRAM_API_HASH")),
     phone_number=os.getenv("TELEGRAM_PHONE_NUMBER"),
+    proxy=proxy,
+    # Optional: Advanced settings
+    timeout=30,
+    set_typing=True,
+    typing_delay_factor=0.05,
+    typing_delay_max=30.0,
+    min_typing_speed=100.0,
+    max_typing_speed=200.0,
+    chat_history_limit=100,
 )
 
 async def get_code():
