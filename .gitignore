@@ -8,3 +8,4 @@ __pycache__
 members.csv
 streamlit_app/sessions
 sqlite.db
+/dist

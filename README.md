@@ -1,5 +1,9 @@
 # Telegram AI Agent Library
 
+[![PyPI version](https://badge.fury.io/py/telegram-ai-agent.svg)](https://badge.fury.io/py/telegram-ai-agent)
+[![Python Version](https://img.shields.io/pypi/pyversions/telegram-ai-agent.svg)](https://pypi.org/project/telegram-ai-agent/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 This Python library provides a framework for creating AI-powered Telegram bots using the Telegram Core API and the [phi](https://github.com/phidatahq/phidata) library for AI integration.
 
 ## Features
@@ -17,7 +21,21 @@ This Python library provides a framework for creating AI-powered Telegram bots u
 
 ## Installation
 
-To install the library, follow these steps:
+You can install the library directly from PyPI:
+
+```sh
+pip install telegram-ai-agent
+```
+
+### Using Poetry
+
+If you're using Poetry for dependency management:
+
+```sh
+poetry add telegram-ai-agent
+```
+
+### Install from source
 
 1. Clone the repository:
    ```sh
@@ -25,20 +43,39 @@ To install the library, follow these steps:
    cd telegram-ai-agent
    ```
 
-2. Create and activate a virtual environment (optional but recommended):
+2. Using Poetry (recommended):
+   ```sh
+   poetry install
+   ```
+
+   This will create a virtual environment and install all dependencies automatically.
+
+3. Or using pip with a virtual environment:
    ```sh
    python -m venv .venv
    source .venv/bin/activate  # On Windows, use `.venv\Scripts\activate`
-   ```
-
-3. Install the package in editable mode:
-   ```sh
    pip install -e .
    ```
 
-This will install the library and its dependencies, allowing you to use it in your projects and make changes to the source code if needed.
-
 Note: Make sure you have Python 3.11 or higher installed on your system before proceeding with the installation.
+
+### Development Installation
+
+For development purposes, install with additional dependencies:
+
+```sh
+# Using pip
+pip install -e ".[dev]"
+
+# Using Poetry
+poetry install --with dev
+```
+
+This will install additional packages needed for development, such as:
+- pytest for testing
+- ruff for linting
+- black for code formatting
+- pre-commit hooks
 
 ## Streamlit UI
 
