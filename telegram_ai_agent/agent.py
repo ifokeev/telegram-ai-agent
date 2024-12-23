@@ -1,15 +1,18 @@
-import logging
 import asyncio
-from typing import Optional, Callable
-from phi.assistant.assistant import Assistant
-from langchain_experimental.text_splitter import SemanticChunker
+import logging
+
+from typing import Callable, Optional
+
 from langchain.embeddings import OpenAIEmbeddings
+from langchain_experimental.text_splitter import SemanticChunker
+from phi.assistant.assistant import Assistant
+from phi.llm.openai.chat import OpenAIChat
+
+from .config import TelegramConfig
 from .inbound import InboundMessaging
 from .outbound import OutboundMessaging
-from .config import TelegramConfig
 from .session import TelegramSession
 from .tools import TelegramTools
-from phi.llm.openai.chat import OpenAIChat
 
 
 class TelegramAIAgent:

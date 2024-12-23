@@ -1,6 +1,7 @@
-from .session import Session
-from .models import Assistant
 from sqlalchemy.orm import joinedload
+
+from .models import Assistant
+from .session import Session
 
 
 def save_assistant(telegram_config_id, name, api_key, description, instructions):

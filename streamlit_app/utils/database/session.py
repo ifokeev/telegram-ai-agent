@@ -1,7 +1,10 @@
+from pathlib import Path
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from pathlib import Path
+
 from .models import Base
+
 
 # Get the directory of the current script
 current_dir = Path(__file__).parent.resolve()

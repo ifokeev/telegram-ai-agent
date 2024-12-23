@@ -1,5 +1,5 @@
-from .session import Session
 from .models import Segment, SegmentUser
+from .session import Session
 
 
 def create_segment(name, description):

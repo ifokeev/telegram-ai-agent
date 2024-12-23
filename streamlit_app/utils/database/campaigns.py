@@ -1,8 +1,10 @@
 from datetime import datetime
-from .session import Session
-from .models import Campaign, CampaignRecipient, SegmentUser
-from sqlalchemy.orm import joinedload
+
 from sqlalchemy import func
+from sqlalchemy.orm import joinedload
+
+from .models import Campaign, CampaignRecipient, SegmentUser
+from .session import Session
 
 
 def create_campaign(

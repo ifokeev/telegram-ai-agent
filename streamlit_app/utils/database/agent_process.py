@@ -1,10 +1,11 @@
-import multiprocessing
+import asyncio
 import logging
+import multiprocessing
 import os
 import signal
-import asyncio
-from .assistant import get_assistant_by_id, update_assistant_status
+
 from ..agent_factory import create_telegram_ai_agent
+from .assistant import get_assistant_by_id, update_assistant_status
 
 
 def run_agent_process(assistant_id, session_name):

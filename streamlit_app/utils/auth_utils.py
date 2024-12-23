@@ -1,7 +1,9 @@
-import streamlit as st
 import asyncio
-from telegram_ai_agent.session import TelegramSession
+
+import streamlit as st
+
 from telegram_ai_agent import TelegramConfig
+from telegram_ai_agent.session import TelegramSession
 
 
 async def try_auth(config: TelegramConfig, logger, stop_session=False):

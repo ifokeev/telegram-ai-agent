@@ -1,13 +1,16 @@
 import asyncio
 import random
-from typing import List, Dict, Any
-from telethon import events
+
+from typing import Any
+
 from phi.assistant.assistant import Assistant
+from telethon import events
+
 from .messages_handler import MessagesHandler
 
 
 class InboundMessaging(MessagesHandler):
-    async def get_chat_history(self, user_id: int) -> List[Dict[str, Any]]:
+    async def get_chat_history(self, user_id: int) -> list[dict[str, Any]]:
         messages = []
         async for message in self.session.iter_messages(
             user_id, limit=self.config.chat_history_limit

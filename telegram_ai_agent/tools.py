@@ -1,17 +1,19 @@
-import os
 import csv
 import logging
+import os
+
 from telethon.tl.functions.channels import GetParticipantsRequest
 from telethon.tl.types import (
-    ChannelParticipantsAdmins,
-    ChannelParticipantsBots,
-    ChannelParticipantsSearch,
-    ChannelParticipantsKicked,
-    ChannelParticipantsBanned,
-    User,
-    Chat,
     Channel,
+    ChannelParticipantsAdmins,
+    ChannelParticipantsBanned,
+    ChannelParticipantsBots,
+    ChannelParticipantsKicked,
+    ChannelParticipantsSearch,
+    Chat,
+    User,
 )
+
 from .session import TelegramSession
 
 
@@ -29,7 +31,7 @@ class TelegramTools:
             except ValueError:
                 pass  # If it's not an integer, keep it as a string
             chat = await self.session.get_entity(chat_identifier)
-        except ValueError:
+        except ValueError as e:
             # If direct lookup fails, try to find the chat in the user's dialogs
             self.logger.info("Direct lookup failed. Searching in dialogs...")
             dialogs = await self.get_dialogs(limit=None)  # Get all dialogs
@@ -46,7 +48,7 @@ class TelegramTools:
             if not chat:
                 raise ValueError(
                     f"Cannot find any entity corresponding to {chat_identifier}"
-                )
+                ) from e
 
             # Get the actual entity from the found dialog
             chat = await self.session.get_entity(int(chat["id"]))
@@ -70,7 +72,7 @@ class TelegramTools:
 
             if isinstance(chat, User):
                 self.logger.info(
-                    f"The provided identifier is a user, not a chat or channel."
+                    "The provided identifier is a user, not a chat or channel."
                 )
                 members = [
                     (
@@ -117,7 +119,7 @@ class TelegramTools:
 
         except Exception as e:
             self.logger.error(f"Error fetching members: {str(e)}")
-            raise
+            raise e from e
 
     async def advanced_search_participants(self, chat, include_kick_ban=False):
         if isinstance(chat, User):
@@ -125,7 +127,7 @@ class TelegramTools:
                 (chat.id, chat.username, chat.first_name, chat.last_name, chat.phone)
             ]
 
-        self.logger.info(f"Performing advanced search for participants")
+        self.logger.info("Performing advanced search for participants")
         members = set()
         alphabet1 = "АБCДЕЄЖФГHИІJКЛМНОПQРСТУВWХЦЧШЩЫЮЯЗ"
         alphabet2 = "АCЕHИJЛМНОРСТУВWЫ"

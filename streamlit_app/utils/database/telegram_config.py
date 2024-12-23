@@ -1,5 +1,5 @@
-from .session import Session
 from .models import TelegramConfig
+from .session import Session
 
 
 def save_telegram_config(phone_number, api_id, api_hash, session_file):

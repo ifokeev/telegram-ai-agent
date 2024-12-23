@@ -1,17 +1,19 @@
-import streamlit as st
 import pandas as pd
-from streamlit_app.utils.logging_utils import setup_logger
+import streamlit as st
+
 from streamlit_app.utils.database.segment import (
-    create_segment,
-    get_all_segments,
+    add_user_to_segment,
     add_users_to_segment,
-    get_segment_user_count,
-    update_segment,
+    create_segment,
     delete_segment,
+    get_all_segments,
+    get_segment_user_count,
     get_segment_users,
     remove_user_from_segment,
-    add_user_to_segment,
+    update_segment,
 )
+from streamlit_app.utils.logging_utils import setup_logger
+
 
 logger = setup_logger(__name__)
 

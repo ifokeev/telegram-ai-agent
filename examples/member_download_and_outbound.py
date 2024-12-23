@@ -1,12 +1,14 @@
 import asyncio
+import json
 import logging
 import os
-import json
+
 from dotenv import load_dotenv
-from telegram_ai_agent import TelegramAIAgent, TelegramConfig
-from telegram_ai_agent.utils import setup_logging
 from phi.assistant.assistant import Assistant
 from phi.llm.openai.chat import OpenAIChat
+
+from telegram_ai_agent import TelegramAIAgent, TelegramConfig
+from telegram_ai_agent.utils import setup_logging
 
 
 # Load environment variables and setup logging
@@ -29,7 +31,7 @@ MEMBERS_FILE = "chat_members.json"
 
 async def get_chat_members(session, chat_name):
     if os.path.exists(MEMBERS_FILE):
-        with open(MEMBERS_FILE, "r") as f:
+        with open(MEMBERS_FILE) as f:
             return json.load(f)
 
     logger.info(f"Downloading members from {chat_name}")

@@ -1,6 +1,8 @@
 import asyncio
-from telethon.tl.types import InputPeerUser
+
 from telethon.errors import FloodWaitError
+from telethon.tl.types import InputPeerUser
+
 from .messages_handler import MessagesHandler
 
 

@@ -1,9 +1,12 @@
-from telegram_ai_agent import TelegramAIAgent, TelegramConfig
-from streamlit_app.utils.assistant_factory import create_phi_assistant
-from typing import Optional, Callable
 import asyncio
+
 from pathlib import Path
+from typing import Callable, Optional
+
+from streamlit_app.utils.assistant_factory import create_phi_assistant
 from streamlit_app.utils.auth_utils import try_auth
+from telegram_ai_agent import TelegramAIAgent, TelegramConfig
+
 
 current_dir = Path(__file__).parents[1].resolve()
 SESSIONS_FOLDER = current_dir / "sessions"

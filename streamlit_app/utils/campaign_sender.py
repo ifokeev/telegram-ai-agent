@@ -1,7 +1,8 @@
 import asyncio
-from telegram_ai_agent import TelegramAIAgent
-from streamlit_app.utils.database.campaigns import update_recipient_status
+
 from streamlit_app.utils.agent_factory import create_telegram_ai_agent
+from streamlit_app.utils.database.campaigns import update_recipient_status
+from telegram_ai_agent import TelegramAIAgent
 
 
 class CampaignSender:

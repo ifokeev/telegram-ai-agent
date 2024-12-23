@@ -1,7 +1,9 @@
 import streamlit as st
-from streamlit_app.utils.logging_utils import setup_logger
-from streamlit_app.utils.database.assistant import get_all_assistants
+
 from streamlit_app.utils.assistant_factory import create_phi_assistant
+from streamlit_app.utils.database.assistant import get_all_assistants
+from streamlit_app.utils.logging_utils import setup_logger
+
 
 logger = setup_logger(__name__)
 

@@ -1,9 +1,12 @@
-import logging
 import asyncio
+import logging
+
+from typing import Callable, Optional
+
 from telethon import TelegramClient as TelethonClient
 from telethon.errors import SessionPasswordNeededError
+
 from .config import TelegramConfig
-from typing import Optional, Callable
 
 
 class TelegramSession(TelethonClient):
@@ -83,12 +86,12 @@ class TelegramSession(TelethonClient):
                 try:
                     self.logger.info("Signing in with the provided code...")
                     await self.sign_in(self.config.phone_number, code)
-                except SessionPasswordNeededError:
+                except SessionPasswordNeededError as e:
                     self.logger.info("Two-step verification is enabled.")
                     if not self.twofa_password_callback:
                         raise ValueError(
                             "No twofa_password_callback provided for receiving the password."
-                        )
+                        ) from e
 
                     password = await self.twofa_password_callback()
                     await self.sign_in(password=password)
@@ -96,15 +99,15 @@ class TelegramSession(TelethonClient):
             self.logger.info(
                 f"Successfully authenticated for {self.config.phone_number}"
             )
-        except asyncio.TimeoutError:
+        except asyncio.TimeoutError as e:
             self.logger.error(
                 f"Connection timed out after {self.config.timeout} seconds."
             )
-            raise
+            raise e from e
         except Exception as e:
             self.logger.error(f"Authentication failed in start(): {str(e)}")
             await self.disconnect()
-            raise
+            raise e from e
 
     async def sign_in(self, phone=None, code=None, password=None):
         try:
@@ -114,12 +117,12 @@ class TelegramSession(TelethonClient):
                 await super().sign_in(password=password)
             else:
                 raise ValueError("Code or password must be provided")
-        except SessionPasswordNeededError:
+        except SessionPasswordNeededError as e:
             self.logger.info("Two-step verification enabled. Password required.")
-            raise
+            raise e from e
         except Exception as e:
             self.logger.error(f"Authentication failed during sign-in: {str(e)}")
-            raise
+            raise e from e
 
     async def stop(self):
         if self.is_connected():

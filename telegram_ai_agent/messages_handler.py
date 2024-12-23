@@ -1,12 +1,15 @@
 import asyncio
-import random
 import logging
+import random
+
+from collections.abc import AsyncGenerator
+
+from langchain_experimental.text_splitter import SemanticChunker
 from telethon.tl.functions.messages import SetTypingRequest
 from telethon.tl.types import SendMessageTypingAction
-from typing import List, AsyncGenerator
+
 from .config import TelegramConfig
 from .session import TelegramSession
-from langchain_experimental.text_splitter import SemanticChunker
 
 
 class MessagesHandler:
@@ -22,7 +25,7 @@ class MessagesHandler:
         self.text_splitter = text_splitter
         self.logger = logger or logging.getLogger(__name__)
 
-    def balance_chunks(self, text: str) -> List[str]:
+    def balance_chunks(self, text: str) -> list[str]:
         chunks = self.text_splitter.split_text(text)
         target_messages = random.randint(
             self.config.min_messages, min(self.config.max_messages, len(chunks))

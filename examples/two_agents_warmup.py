@@ -2,12 +2,16 @@ import asyncio
 import logging
 import os
 import random
+
 from datetime import datetime, timedelta
+
 from dotenv import load_dotenv
-from telegram_ai_agent import TelegramAIAgent, TelegramConfig
-from telegram_ai_agent.utils import setup_logging
 from phi.assistant.assistant import Assistant
 from phi.llm.openai.chat import OpenAIChat
+
+from telegram_ai_agent import TelegramAIAgent, TelegramConfig
+from telegram_ai_agent.utils import setup_logging
+
 
 # Load environment variables and setup logging
 load_dotenv()
