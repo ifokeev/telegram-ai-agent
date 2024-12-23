@@ -41,12 +41,45 @@ async def create_telegram_ai_agent(
     # Create the phi_assistant using the factory method
     phi_assistant = create_phi_assistant(assistant_data)
 
-    # Create TelegramConfig instance
+    # Create proxy dict if proxy settings are provided
+    proxy = None
+    if (
+        assistant_data.proxy_scheme
+        and assistant_data.proxy_hostname
+        and assistant_data.proxy_port
+    ):
+        proxy = {
+            "scheme": assistant_data.proxy_scheme,
+            "hostname": assistant_data.proxy_hostname,
+            "port": assistant_data.proxy_port,
+        }
+
+    # Create TelegramConfig instance with all advanced settings
     telegram_config = TelegramConfig(
         session_name=session_name or assistant_data.telegram_config.session_file,
         api_id=assistant_data.telegram_config.api_id,
         api_hash=assistant_data.telegram_config.api_hash,
         phone_number=assistant_data.telegram_config.phone_number,
+        proxy=proxy,
+        # Add all advanced settings from the Assistant model
+        timeout=assistant_data.timeout,
+        set_typing=assistant_data.set_typing,
+        typing_delay_factor=assistant_data.typing_delay_factor,
+        typing_delay_max=assistant_data.typing_delay_max,
+        inter_chunk_delay_min=assistant_data.inter_chunk_delay_min,
+        inter_chunk_delay_max=assistant_data.inter_chunk_delay_max,
+        min_messages=assistant_data.min_messages,
+        max_messages=assistant_data.max_messages,
+        min_typing_speed=assistant_data.min_typing_speed,
+        max_typing_speed=assistant_data.max_typing_speed,
+        min_burst_length=assistant_data.min_burst_length,
+        max_burst_length=assistant_data.max_burst_length,
+        min_pause_duration=assistant_data.min_pause_duration,
+        max_pause_duration=assistant_data.max_pause_duration,
+        read_delay_factor=assistant_data.read_delay_factor,
+        min_read_delay=assistant_data.min_read_delay,
+        max_read_delay=assistant_data.max_read_delay,
+        chat_history_limit=assistant_data.chat_history_limit,
     )
 
     auth_success, session = await try_auth(telegram_config, logger)

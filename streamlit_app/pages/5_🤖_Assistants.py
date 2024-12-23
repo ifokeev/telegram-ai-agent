@@ -51,6 +51,243 @@ else:
             except Exception as e:
                 st.error(f"An error occurred during testing: {str(e)}")
 
+        def render_proxy_fields(
+            prefix="", proxy_scheme=None, proxy_hostname=None, proxy_port=None
+        ):
+            """Render proxy configuration fields"""
+            st.subheader("Proxy Configuration (Optional)")
+            col1, col2, col3 = st.columns(3)
+
+            with col1:
+                scheme = st.selectbox(
+                    "Proxy Scheme",
+                    options=["", "socks5", "http", "https"],
+                    key=f"{prefix}proxy_scheme",
+                    index=(
+                        0
+                        if not proxy_scheme
+                        else ["", "socks5", "http", "https"].index(proxy_scheme)
+                    ),
+                )
+
+            with col2:
+                hostname = st.text_input(
+                    "Proxy Hostname",
+                    value=proxy_hostname or "",
+                    key=f"{prefix}proxy_hostname",
+                )
+
+            with col3:
+                port = st.number_input(
+                    "Proxy Port",
+                    min_value=0,
+                    max_value=65535,
+                    value=proxy_port or 0,
+                    key=f"{prefix}proxy_port",
+                )
+
+            return scheme, hostname, port if port > 0 else None
+
+        def render_advanced_config(prefix="", assistant=None):
+            """Render advanced configuration fields in an expander"""
+            with st.expander("Advanced Configuration", expanded=False):
+                st.markdown("### Timing and Behavior Settings")
+
+                col1, col2 = st.columns(2)
+                with col1:
+                    timeout = st.number_input(
+                        "Timeout (seconds)",
+                        min_value=1,
+                        max_value=300,
+                        value=assistant.timeout if assistant else 30,
+                        key=f"{prefix}timeout",
+                    )
+
+                    set_typing = st.checkbox(
+                        "Show typing indicator",
+                        value=assistant.set_typing if assistant else True,
+                        key=f"{prefix}set_typing",
+                    )
+
+                with col2:
+                    chat_history_limit = st.number_input(
+                        "Chat History Limit",
+                        min_value=1,
+                        max_value=1000,
+                        value=assistant.chat_history_limit if assistant else 100,
+                        key=f"{prefix}chat_history_limit",
+                    )
+
+                st.markdown("### Typing Simulation")
+                col1, col2, col3 = st.columns(3)
+
+                with col1:
+                    typing_delay_factor = st.number_input(
+                        "Typing Delay Factor",
+                        min_value=0.01,
+                        max_value=1.0,
+                        value=assistant.typing_delay_factor if assistant else 0.05,
+                        format="%.2f",
+                        key=f"{prefix}typing_delay_factor",
+                    )
+
+                    min_typing_speed = st.number_input(
+                        "Min Typing Speed (WPM)",
+                        min_value=10.0,
+                        max_value=500.0,
+                        value=assistant.min_typing_speed if assistant else 100.0,
+                        key=f"{prefix}min_typing_speed",
+                    )
+
+                with col2:
+                    typing_delay_max = st.number_input(
+                        "Max Typing Delay",
+                        min_value=1.0,
+                        max_value=60.0,
+                        value=assistant.typing_delay_max if assistant else 30.0,
+                        key=f"{prefix}typing_delay_max",
+                    )
+
+                    max_typing_speed = st.number_input(
+                        "Max Typing Speed (WPM)",
+                        min_value=10.0,
+                        max_value=500.0,
+                        value=assistant.max_typing_speed if assistant else 200.0,
+                        key=f"{prefix}max_typing_speed",
+                    )
+
+                st.markdown("### Message Chunking")
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    min_messages = st.number_input(
+                        "Min Messages",
+                        min_value=1,
+                        max_value=10,
+                        value=assistant.min_messages if assistant else 1,
+                        key=f"{prefix}min_messages",
+                    )
+
+                    inter_chunk_delay_min = st.number_input(
+                        "Min Chunk Delay",
+                        min_value=0.1,
+                        max_value=10.0,
+                        value=assistant.inter_chunk_delay_min if assistant else 1.5,
+                        format="%.1f",
+                        key=f"{prefix}inter_chunk_delay_min",
+                    )
+
+                with col2:
+                    max_messages = st.number_input(
+                        "Max Messages",
+                        min_value=1,
+                        max_value=10,
+                        value=assistant.max_messages if assistant else 3,
+                        key=f"{prefix}max_messages",
+                    )
+
+                    inter_chunk_delay_max = st.number_input(
+                        "Max Chunk Delay",
+                        min_value=0.1,
+                        max_value=10.0,
+                        value=assistant.inter_chunk_delay_max if assistant else 4.0,
+                        format="%.1f",
+                        key=f"{prefix}inter_chunk_delay_max",
+                    )
+
+                st.markdown("### Natural Pauses")
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    min_burst_length = st.number_input(
+                        "Min Burst Length",
+                        min_value=1,
+                        max_value=50,
+                        value=assistant.min_burst_length if assistant else 5,
+                        key=f"{prefix}min_burst_length",
+                    )
+
+                    min_pause_duration = st.number_input(
+                        "Min Pause Duration",
+                        min_value=0.1,
+                        max_value=5.0,
+                        value=assistant.min_pause_duration if assistant else 0.5,
+                        format="%.1f",
+                        key=f"{prefix}min_pause_duration",
+                    )
+
+                with col2:
+                    max_burst_length = st.number_input(
+                        "Max Burst Length",
+                        min_value=1,
+                        max_value=50,
+                        value=assistant.max_burst_length if assistant else 15,
+                        key=f"{prefix}max_burst_length",
+                    )
+
+                    max_pause_duration = st.number_input(
+                        "Max Pause Duration",
+                        min_value=0.1,
+                        max_value=5.0,
+                        value=assistant.max_pause_duration if assistant else 2.0,
+                        format="%.1f",
+                        key=f"{prefix}max_pause_duration",
+                    )
+
+                st.markdown("### Read Receipts")
+                col1, col2, col3 = st.columns(3)
+
+                with col1:
+                    read_delay_factor = st.number_input(
+                        "Read Delay Factor",
+                        min_value=0.01,
+                        max_value=1.0,
+                        value=assistant.read_delay_factor if assistant else 0.05,
+                        format="%.2f",
+                        key=f"{prefix}read_delay_factor",
+                    )
+
+                with col2:
+                    min_read_delay = st.number_input(
+                        "Min Read Delay",
+                        min_value=0.1,
+                        max_value=10.0,
+                        value=assistant.min_read_delay if assistant else 0.5,
+                        format="%.1f",
+                        key=f"{prefix}min_read_delay",
+                    )
+
+                with col3:
+                    max_read_delay = st.number_input(
+                        "Max Read Delay",
+                        min_value=0.1,
+                        max_value=10.0,
+                        value=assistant.max_read_delay if assistant else 2.0,
+                        format="%.1f",
+                        key=f"{prefix}max_read_delay",
+                    )
+
+                return {
+                    "timeout": timeout,
+                    "set_typing": set_typing,
+                    "typing_delay_factor": typing_delay_factor,
+                    "typing_delay_max": typing_delay_max,
+                    "inter_chunk_delay_min": inter_chunk_delay_min,
+                    "inter_chunk_delay_max": inter_chunk_delay_max,
+                    "min_messages": min_messages,
+                    "max_messages": max_messages,
+                    "min_typing_speed": min_typing_speed,
+                    "max_typing_speed": max_typing_speed,
+                    "min_burst_length": min_burst_length,
+                    "max_burst_length": max_burst_length,
+                    "min_pause_duration": min_pause_duration,
+                    "max_pause_duration": max_pause_duration,
+                    "read_delay_factor": read_delay_factor,
+                    "min_read_delay": min_read_delay,
+                    "max_read_delay": max_read_delay,
+                    "chat_history_limit": chat_history_limit,
+                }
+
         with tab1:
             st.header("Create New Assistant")
             name = st.text_input("Assistant Name")
@@ -58,10 +295,27 @@ else:
             description = st.text_area("Assistant Description")
             instructions = st.text_area("Instructions (one per line)")
 
+            # Add proxy configuration
+            proxy_scheme, proxy_hostname, proxy_port = render_proxy_fields(
+                prefix="create_"
+            )
+
+            # Add advanced configuration
+            advanced_config = render_advanced_config(prefix="create_")
+
             if st.button("Create Assistant"):
                 try:
-                    # Save the assistant to the database
-                    save_assistant(config.id, name, api_key, description, instructions)
+                    save_assistant(
+                        config.id,
+                        name,
+                        api_key,
+                        description,
+                        instructions,
+                        proxy_scheme,
+                        proxy_hostname,
+                        proxy_port,
+                        **advanced_config,  # Include all advanced settings
+                    )
                     logger.info(
                         f"Assistant '{name}' created successfully for {selected_phone}!"
                     )
@@ -111,15 +365,33 @@ else:
                         "New Instructions", value=selected_assistant.instructions
                     )
 
+                    # Add proxy configuration
+                    new_proxy_scheme, new_proxy_hostname, new_proxy_port = (
+                        render_proxy_fields(
+                            prefix="edit_",
+                            proxy_scheme=selected_assistant.proxy_scheme,
+                            proxy_hostname=selected_assistant.proxy_hostname,
+                            proxy_port=selected_assistant.proxy_port,
+                        )
+                    )
+
+                    # Add advanced configuration
+                    new_advanced_config = render_advanced_config(
+                        prefix="edit_", assistant=selected_assistant
+                    )
+
                     if st.button("Update Assistant"):
                         try:
-                            # Update the assistant in the database
                             update_assistant(
                                 selected_assistant.id,
                                 new_name,
                                 new_api_key,
                                 new_description,
                                 new_instructions,
+                                new_proxy_scheme,
+                                new_proxy_hostname,
+                                new_proxy_port,
+                                **new_advanced_config,  # Include all advanced settings
                             )
                             logger.info(
                                 f"Assistant '{selected_assistant.name}' updated successfully!"

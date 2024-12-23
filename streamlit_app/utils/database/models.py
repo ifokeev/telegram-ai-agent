@@ -37,6 +37,31 @@ class Assistant(Base):
     status = Column(String, default="Stopped")
     pid = Column(Integer, nullable=True)
 
+    # Proxy settings
+    proxy_scheme = Column(String, nullable=True)
+    proxy_hostname = Column(String, nullable=True)
+    proxy_port = Column(Integer, nullable=True)
+
+    # Advanced settings
+    timeout = Column(Integer, default=30)
+    set_typing = Column(Boolean, default=True)
+    typing_delay_factor = Column(Float, default=0.05)
+    typing_delay_max = Column(Float, default=30.0)
+    inter_chunk_delay_min = Column(Float, default=1.5)
+    inter_chunk_delay_max = Column(Float, default=4.0)
+    min_messages = Column(Integer, default=1)
+    max_messages = Column(Integer, default=3)
+    min_typing_speed = Column(Float, default=100.0)
+    max_typing_speed = Column(Float, default=200.0)
+    min_burst_length = Column(Integer, default=5)
+    max_burst_length = Column(Integer, default=15)
+    min_pause_duration = Column(Float, default=0.5)
+    max_pause_duration = Column(Float, default=2.0)
+    read_delay_factor = Column(Float, default=0.05)
+    min_read_delay = Column(Float, default=0.5)
+    max_read_delay = Column(Float, default=2.0)
+    chat_history_limit = Column(Integer, default=100)
+
     telegram_config = relationship("TelegramConfig", back_populates="assistants")
     campaigns = relationship(
         "Campaign", back_populates="assistant", cascade="all, delete-orphan"

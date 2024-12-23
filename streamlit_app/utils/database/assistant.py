@@ -7,7 +7,34 @@ from .models import Assistant
 from .session import get_db_session
 
 
-def save_assistant(telegram_config_id, name, api_key, description, instructions):
+def save_assistant(
+    telegram_config_id,
+    name,
+    api_key,
+    description,
+    instructions,
+    proxy_scheme=None,
+    proxy_hostname=None,
+    proxy_port=None,
+    timeout=30,
+    set_typing=True,
+    typing_delay_factor=0.05,
+    typing_delay_max=30.0,
+    inter_chunk_delay_min=1.5,
+    inter_chunk_delay_max=4.0,
+    min_messages=1,
+    max_messages=3,
+    min_typing_speed=100.0,
+    max_typing_speed=200.0,
+    min_burst_length=5,
+    max_burst_length=15,
+    min_pause_duration=0.5,
+    max_pause_duration=2.0,
+    read_delay_factor=0.05,
+    min_read_delay=0.5,
+    max_read_delay=2.0,
+    chat_history_limit=100,
+):
     with get_db_session() as session:
         assistant = Assistant(
             telegram_config_id=telegram_config_id,
@@ -15,10 +42,31 @@ def save_assistant(telegram_config_id, name, api_key, description, instructions)
             api_key=api_key,
             description=description,
             instructions=instructions,
+            proxy_scheme=proxy_scheme,
+            proxy_hostname=proxy_hostname,
+            proxy_port=proxy_port,
+            # Advanced settings
+            timeout=timeout,
+            set_typing=set_typing,
+            typing_delay_factor=typing_delay_factor,
+            typing_delay_max=typing_delay_max,
+            inter_chunk_delay_min=inter_chunk_delay_min,
+            inter_chunk_delay_max=inter_chunk_delay_max,
+            min_messages=min_messages,
+            max_messages=max_messages,
+            min_typing_speed=min_typing_speed,
+            max_typing_speed=max_typing_speed,
+            min_burst_length=min_burst_length,
+            max_burst_length=max_burst_length,
+            min_pause_duration=min_pause_duration,
+            max_pause_duration=max_pause_duration,
+            read_delay_factor=read_delay_factor,
+            min_read_delay=min_read_delay,
+            max_read_delay=max_read_delay,
+            chat_history_limit=chat_history_limit,
         )
         session.add(assistant)
-        session.flush()  # Ensure the instance has an ID
-        # Create a detached copy
+        session.flush()
         detached = deepcopy(assistant)
         make_transient(detached)
         return detached
@@ -73,7 +121,34 @@ def get_assistant_by_id(assistant_id):
         return None
 
 
-def update_assistant(assistant_id, name, api_key, description, instructions):
+def update_assistant(
+    assistant_id,
+    name,
+    api_key,
+    description,
+    instructions,
+    proxy_scheme=None,
+    proxy_hostname=None,
+    proxy_port=None,
+    timeout=30,
+    set_typing=True,
+    typing_delay_factor=0.05,
+    typing_delay_max=30.0,
+    inter_chunk_delay_min=1.5,
+    inter_chunk_delay_max=4.0,
+    min_messages=1,
+    max_messages=3,
+    min_typing_speed=100.0,
+    max_typing_speed=200.0,
+    min_burst_length=5,
+    max_burst_length=15,
+    min_pause_duration=0.5,
+    max_pause_duration=2.0,
+    read_delay_factor=0.05,
+    min_read_delay=0.5,
+    max_read_delay=2.0,
+    chat_history_limit=100,
+):
     with get_db_session() as session:
         assistant = session.query(Assistant).filter_by(id=assistant_id).first()
         if assistant:
@@ -81,8 +156,29 @@ def update_assistant(assistant_id, name, api_key, description, instructions):
             assistant.api_key = api_key
             assistant.description = description
             assistant.instructions = instructions
+            assistant.proxy_scheme = proxy_scheme
+            assistant.proxy_hostname = proxy_hostname
+            assistant.proxy_port = proxy_port
+            # Update advanced settings
+            assistant.timeout = timeout
+            assistant.set_typing = set_typing
+            assistant.typing_delay_factor = typing_delay_factor
+            assistant.typing_delay_max = typing_delay_max
+            assistant.inter_chunk_delay_min = inter_chunk_delay_min
+            assistant.inter_chunk_delay_max = inter_chunk_delay_max
+            assistant.min_messages = min_messages
+            assistant.max_messages = max_messages
+            assistant.min_typing_speed = min_typing_speed
+            assistant.max_typing_speed = max_typing_speed
+            assistant.min_burst_length = min_burst_length
+            assistant.max_burst_length = max_burst_length
+            assistant.min_pause_duration = min_pause_duration
+            assistant.max_pause_duration = max_pause_duration
+            assistant.read_delay_factor = read_delay_factor
+            assistant.min_read_delay = min_read_delay
+            assistant.max_read_delay = max_read_delay
+            assistant.chat_history_limit = chat_history_limit
             session.flush()
-            # Create a detached copy
             detached = deepcopy(assistant)
             make_transient(detached)
             return detached
