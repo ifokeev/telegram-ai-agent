@@ -87,6 +87,21 @@ streamlit run streamlit_app/Home.py
 
 and navigate to `http://localhost:8501` in your web browser.
 
+### Video Tutorial
+
+Watch our video tutorial to learn how to use the Streamlit UI:
+
+[![Telegram AI Agent Streamlit UI Tutorial](https://img.youtube.com/vi/CxiQi1CnueE/0.jpg)](https://youtu.be/CxiQi1CnueE)
+
+The video demonstrates:
+- Setting up your Telegram account
+- Managing AI assistants
+- Running and monitoring agents
+- Using the chat interface
+- Managing user segments and campaigns
+
+This visual guide will help you get started with the Telegram AI Agent's user interface quickly and efficiently.
+
 ## Configuration
 
 To configure the Telegram AI Agent library, you need to set up environment variables. You can do this by either creating a `.env` file or copying from the provided `.env.example` file.
