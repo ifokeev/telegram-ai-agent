@@ -3,6 +3,7 @@
 [![PyPI version](https://badge.fury.io/py/telegram-ai-agent.svg)](https://badge.fury.io/py/telegram-ai-agent)
 [![Python Version](https://img.shields.io/pypi/pyversions/telegram-ai-agent.svg)](https://pypi.org/project/telegram-ai-agent/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PyPI Downloads](https://static.pepy.tech/badge/telegram-ai-agent)](https://pepy.tech/projects/telegram-ai-agent)
 
 This Python library provides a framework for creating AI-powered Telegram bots using the Telegram Core API and the [phi](https://github.com/phidatahq/phidata) library for AI integration.
 
